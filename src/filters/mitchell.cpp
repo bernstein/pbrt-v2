@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -35,19 +36,37 @@
 #include "filters/mitchell.h"
 #include "paramset.h"
 
-// Mitchell Filter Method Definitions
-float MitchellFilter::Evaluate(float x, float y) const {
-    return Mitchell1D(x * invXWidth) * Mitchell1D(y * invYWidth);
+namespace {
+
+float Mitchell1D(float B, float C, float x) {
+  x = fabsf(2.f * x);
+  if (x > 1.f)
+    return ((-B - 6*C) * x*x*x + (6*B + 30*C) * x*x +
+            (-12*B - 48*C) * x + (8*B + 24*C)) * (1.f/6.f);
+  else
+    return ((12 - 9*B - 6*C) * x*x*x +
+            (-18 + 12*B + 6*C) * x*x +
+            (6 - 2*B)) * (1.f/6.f);
 }
 
+}
 
-MitchellFilter *CreateMitchellFilter(const ParamSet &ps) {
+std::function<float(float,float)>
+mitchellFilter(float B, float C, float xw, float yw)
+{
+  float invXWidth(1.0f/xw);
+  float invYWidth(1.0f/yw);
+
+  return [B,C,invXWidth,invYWidth](float x, float y) {
+    return Mitchell1D(B, C, x * invXWidth) * Mitchell1D(B, C, y * invYWidth);
+  };
+}
+
+Filter CreateMitchellFilter(const ParamSet &ps) {
     // Find common filter parameters
     float xw = ps.FindOneFloat("xwidth", 2.f);
     float yw = ps.FindOneFloat("ywidth", 2.f);
     float B = ps.FindOneFloat("B", 1.f/3.f);
     float C = ps.FindOneFloat("C", 1.f/3.f);
-    return new MitchellFilter(B, C, xw, yw);
+    return Filter(xw, yw, mitchellFilter(B, C, xw, yw));
 }
-
-

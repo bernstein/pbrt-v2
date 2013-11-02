@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -35,18 +36,8 @@
 #include "filters/triangle.h"
 #include "paramset.h"
 
-// Triangle Filter Method Definitions
-float TriangleFilter::Evaluate(float x, float y) const {
-    return max(0.f, xWidth - fabsf(x)) *
-           max(0.f, yWidth - fabsf(y));
+Filter CreateTriangleFilter(const ParamSet &ps) {
+  float xw = ps.FindOneFloat("xwidth", 2.f);
+  float yw = ps.FindOneFloat("ywidth", 2.f);
+  return Filter(xw, yw, triangleFilter(xw,yw));
 }
-
-
-TriangleFilter *CreateTriangleFilter(const ParamSet &ps) {
-    // Find common filter parameters
-    float xw = ps.FindOneFloat("xwidth", 2.f);
-    float yw = ps.FindOneFloat("ywidth", 2.f);
-    return new TriangleFilter(xw, yw);
-}
-
-

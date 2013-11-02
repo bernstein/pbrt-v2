@@ -28,14 +28,3 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
-
-
-// core/filter.cpp*
-#include "stdafx.h"
-#include "filter.h"
-
-// Filter Method Definitions
-Filter::~Filter() {
-}
-
-

@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -37,29 +38,11 @@
 #define PBRT_FILTERS_SINC_H
 
 // filters/sinc.h*
+#include <functional>
 #include "filter.h"
 
-// Sinc Filter Declarations
-class LanczosSincFilter : public Filter {
-public:
-    // LanczosSincFilter Public Methods
-    LanczosSincFilter(float xw, float yw, float t)
-        : Filter(xw, yw), tau(t) { }
-    float Evaluate(float x, float y) const;
-    float Sinc1D(float x) const {
-        x = fabsf(x);
-        if (x < 1e-5) return 1.f;
-        if (x > 1.)   return 0.f;
-        x *= M_PI;
-        float sinc = sinf(x) / x;
-        float lanczos = sinf(x * tau) / (x * tau);
-        return sinc * lanczos;
-    }
-private:
-    const float tau;
-};
+std::function<float(float,float)> lanczosSincFilter(float xw, float yw, float t);
 
-
-LanczosSincFilter *CreateSincFilter(const ParamSet &ps);
+Filter CreateSincFilter(const ParamSet &ps);
 
 #endif // PBRT_FILTERS_SINC_H

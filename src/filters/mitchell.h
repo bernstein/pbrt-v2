@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -37,31 +38,11 @@
 #define PBRT_FILTERS_MITCHELL_H
 
 // filters/mitchell.h*
+#include <functional>
 #include "filter.h"
 
-// Mitchell Filter Declarations
-class MitchellFilter : public Filter {
-public:
-    // MitchellFilter Public Methods
-    MitchellFilter(float b, float c, float xw, float yw)
-        : Filter(xw, yw), B(b), C(c) {
-    }
-    float Evaluate(float x, float y) const;
-    float Mitchell1D(float x) const {
-        x = fabsf(2.f * x);
-        if (x > 1.f)
-            return ((-B - 6*C) * x*x*x + (6*B + 30*C) * x*x +
-                    (-12*B - 48*C) * x + (8*B + 24*C)) * (1.f/6.f);
-        else
-            return ((12 - 9*B - 6*C) * x*x*x +
-                    (-18 + 12*B + 6*C) * x*x +
-                    (6 - 2*B)) * (1.f/6.f);
-    }
-private:
-    const float B, C;
-};
+std::function<float(float,float)> mitchellFilter(float B, float C, float xw, float yw);
 
-
-MitchellFilter *CreateMitchellFilter(const ParamSet &ps);
+Filter CreateMitchellFilter(const ParamSet &ps);
 
 #endif // PBRT_FILTERS_MITCHELL_H

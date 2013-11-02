@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -37,28 +38,11 @@
 #define PBRT_FILTERS_GAUSSIAN_H
 
 // filters/gaussian.h*
+#include <functional>
 #include "filter.h"
 
-// Gaussian Filter Declarations
-class GaussianFilter : public Filter {
-public:
-    // GaussianFilter Public Methods
-    GaussianFilter(float xw, float yw, float a)
-        : Filter(xw, yw), alpha(a), expX(expf(-alpha * xWidth * xWidth)),
-          expY(expf(-alpha * yWidth * yWidth)) { }
-    float Evaluate(float x, float y) const;
-private:
-    // GaussianFilter Private Data
-    const float alpha;
-    const float expX, expY;
+std::function<float(float,float)> gaussianFilter(float xw, float yw, float a);
 
-    // GaussianFilter Utility Functions
-    float Gaussian(float d, float expv) const {
-        return max(0.f, float(expf(-alpha * d * d) - expv));
-    }
-};
-
-
-GaussianFilter *CreateGaussianFilter(const ParamSet &ps);
+Filter CreateGaussianFilter(const ParamSet &ps);
 
 #endif // PBRT_FILTERS_GAUSSIAN_H

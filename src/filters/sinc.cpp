@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -35,17 +36,30 @@
 #include "filters/sinc.h"
 #include "paramset.h"
 
-// Sinc Filter Method Definitions
-float LanczosSincFilter::Evaluate(float x, float y) const {
-    return Sinc1D(x * invXWidth) * Sinc1D(y * invYWidth);
+namespace {
+  float Sinc1D(float tau, float x) {
+      x = fabsf(x);
+      if (x < 1e-5) return 1.f;
+      if (x > 1.)   return 0.f;
+      x *= M_PI;
+      const float sinc = sinf(x) / x;
+      const float lanczos = sinf(x * tau) / (x * tau);
+      return sinc * lanczos;
+  }
 }
 
+std::function<float(float,float)> lanczosSincFilter(float xw, float yw, float tau)
+{
+  float invXWidth(1.0f/xw);
+  float invYWidth(1.0f/yw);
+  return [invXWidth,invYWidth,tau](float x, float y) {
+    return Sinc1D(tau, x * invXWidth) * Sinc1D(tau, y * invYWidth);
+  };
+}
 
-LanczosSincFilter *CreateSincFilter(const ParamSet &ps) {
+Filter CreateSincFilter(const ParamSet &ps) {
     float xw = ps.FindOneFloat("xwidth", 4.);
     float yw = ps.FindOneFloat("ywidth", 4.);
     float tau = ps.FindOneFloat("tau", 3.f);
-    return new LanczosSincFilter(xw, yw, tau);
+    return Filter(xw, yw, lanczosSincFilter(xw,yw,tau));
 }
-
-

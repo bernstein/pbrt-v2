@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -37,16 +38,13 @@
 #define PBRT_FILTERS_BOX_H
 
 // filters/box.h*
+#include <functional>
 #include "filter.h"
 
-// Box Filter Declarations
-class BoxFilter : public Filter {
-public:
-    BoxFilter(float xw, float yw) : Filter(xw, yw) { }
-    float Evaluate(float x, float y) const;
-};
+inline std::function<float(float,float)> boxFilter(float xw, float yw) {
+  return [](float,float) { return 1.0; };
+}
 
-
-BoxFilter *CreateBoxFilter(const ParamSet &ps);
+Filter CreateBoxFilter(const ParamSet &ps);
 
 #endif // PBRT_FILTERS_BOX_H

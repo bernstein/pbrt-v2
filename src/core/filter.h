@@ -38,22 +38,28 @@
 
 // core/filter.h*
 #include "pbrt.h"
+#include <functional>
 
 // Filter Declarations
-class Filter {
-public:
-    // Filter Interface
-    virtual ~Filter();
-    Filter(float xw, float yw)
-        : xWidth(xw), yWidth(yw), invXWidth(1.f/xw), invYWidth(1.f/yw) {
-    }
-    virtual float Evaluate(float x, float y) const = 0;
+struct Filter {
+  Filter()
+    : xWidth(0.0f), yWidth(0.0f), invXWidth(0.0f), invYWidth(0.0f), evaluate() 
+  {}
 
-    // Filter Public Data
-    const float xWidth, yWidth;
-    const float invXWidth, invYWidth;
+  Filter(float xw, float yw, std::function<float(float,float)> const& f) 
+    : xWidth(xw), yWidth(yw)
+    , invXWidth(1.f/xw), invYWidth(1.f/yw)
+    , evaluate(f)
+  {}
+
+  Filter(float xw, float yw)
+    : xWidth(xw), yWidth(yw), invXWidth(1.f/xw), invYWidth(1.f/yw) 
+  {}
+
+  // Filter Public Data
+  float xWidth, yWidth;
+  float invXWidth, invYWidth;
+  std::function<float(float,float)> evaluate;
 };
-
-
 
 #endif // PBRT_CORE_FILTER_H

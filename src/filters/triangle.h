@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -37,16 +38,15 @@
 #define PBRT_FILTERS_TRIANGLE_H
 
 // filters/triangle.h*
+#include <functional>
 #include "filter.h"
 
-// Triangle Filter Declarations
-class TriangleFilter : public Filter {
-public:
-    TriangleFilter(float xw, float yw) : Filter(xw, yw) { }
-    float Evaluate(float x, float y) const;
-};
+inline std::function<float(float,float)> triangleFilter(float xw, float yw) {
+  return [xw,yw](float x, float y) {
+    return max(0.0f, xw-fabsf(x)) * max(0.0f, yw-fabsf(y));
+  };
+}
 
-
-TriangleFilter *CreateTriangleFilter(const ParamSet &ps);
+Filter CreateTriangleFilter(const ParamSet &ps);
 
 #endif // PBRT_FILTERS_TRIANGLE_H

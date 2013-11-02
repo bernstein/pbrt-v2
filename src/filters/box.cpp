@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -29,22 +30,13 @@
 
  */
 
-
 // filters/box.cpp*
 #include "stdafx.h"
 #include "filters/box.h"
 #include "paramset.h"
 
-// Box Filter Method Definitions
-float BoxFilter::Evaluate(float x, float y) const {
-    return 1.;
-}
-
-
-BoxFilter *CreateBoxFilter(const ParamSet &ps) {
+Filter CreateBoxFilter(const ParamSet &ps) {
     float xw = ps.FindOneFloat("xwidth", 0.5f);
     float yw = ps.FindOneFloat("ywidth", 0.5f);
-    return new BoxFilter(xw, yw);
+    return Filter(xw,yw,boxFilter(xw,yw));
 }
-
-

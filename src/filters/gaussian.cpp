@@ -1,6 +1,7 @@
 
 /*
     pbrt source code Copyright(c) 1998-2012 Matt Pharr and Greg Humphreys.
+    Andreas-C. Bernstein 2013
 
     This file is part of pbrt.
 
@@ -29,24 +30,32 @@
 
  */
 
-
 // filters/gaussian.cpp*
 #include "stdafx.h"
 #include "filters/gaussian.h"
 #include "paramset.h"
 
-// Gaussian Filter Method Definitions
-float GaussianFilter::Evaluate(float x, float y) const {
-    return Gaussian(x, expX) * Gaussian(y, expY);
+namespace {
+
+float gaussian(float alpha, float d, float expv) {
+    return max(0.f, float(expf(-alpha * d * d) - expv));
 }
 
+}
 
-GaussianFilter *CreateGaussianFilter(const ParamSet &ps) {
+std::function<float(float,float)> gaussianFilter(float xw, float yw, float alpha)
+{
+  const float expX(expf(-alpha * xw * xw));
+  const float expY(expf(-alpha * yw * yw));
+  return [expX,expY,alpha](float x, float y) {
+    return gaussian(alpha, x, expX) * gaussian(alpha, y, expY);
+  };
+}
+
+Filter CreateGaussianFilter(const ParamSet &ps) {
     // Find common filter parameters
     float xw = ps.FindOneFloat("xwidth", 2.f);
     float yw = ps.FindOneFloat("ywidth", 2.f);
     float alpha = ps.FindOneFloat("alpha", 2.f);
-    return new GaussianFilter(xw, yw, alpha);
+    return Filter(xw, yw, gaussianFilter(xw,yw,alpha));
 }
-
-
