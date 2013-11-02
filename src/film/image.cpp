@@ -38,10 +38,11 @@
 #include "imageio.h"
 
 // ImageFilm Method Definitions
-ImageFilm::ImageFilm(int xres, int yres, Filter *filt, const float crop[4],
+ImageFilm::ImageFilm(int xres, int yres, const Filter& filt, const float crop[4],
                      const string &fn, bool openWindow)
-    : Film(xres, yres) {
-    filter = filt;
+    : Film(xres, yres)
+    , filter(filt)
+    {
     memcpy(cropWindow, crop, 4 * sizeof(float));
     filename = fn;
     // Compute film image extent
@@ -59,11 +60,11 @@ ImageFilm::ImageFilm(int xres, int yres, Filter *filt, const float crop[4],
     float *ftp = filterTable;
     for (int y = 0; y < FILTER_TABLE_SIZE; ++y) {
         float fy = ((float)y + .5f) *
-                   filter->yWidth / FILTER_TABLE_SIZE;
+                   filter.yWidth / FILTER_TABLE_SIZE;
         for (int x = 0; x < FILTER_TABLE_SIZE; ++x) {
             float fx = ((float)x + .5f) *
-                       filter->xWidth / FILTER_TABLE_SIZE;
-            *ftp++ = filter->Evaluate(fx, fy);
+                       filter.xWidth / FILTER_TABLE_SIZE;
+            *ftp++ = filter.evaluate(fx, fy);
         }
     }
 
@@ -79,10 +80,10 @@ void ImageFilm::AddSample(const CameraSample &sample,
     // Compute sample's raster extent
     float dimageX = sample.imageX - 0.5f;
     float dimageY = sample.imageY - 0.5f;
-    int x0 = Ceil2Int (dimageX - filter->xWidth);
-    int x1 = Floor2Int(dimageX + filter->xWidth);
-    int y0 = Ceil2Int (dimageY - filter->yWidth);
-    int y1 = Floor2Int(dimageY + filter->yWidth);
+    int x0 = Ceil2Int (dimageX - filter.xWidth);
+    int x1 = Floor2Int(dimageX + filter.xWidth);
+    int y0 = Ceil2Int (dimageY - filter.yWidth);
+    int y1 = Floor2Int(dimageY + filter.yWidth);
     x0 = max(x0, xPixelStart);
     x1 = min(x1, xPixelStart + xPixelCount - 1);
     y0 = max(y0, yPixelStart);
@@ -101,16 +102,16 @@ void ImageFilm::AddSample(const CameraSample &sample,
     int *ifx = ALLOCA(int, x1 - x0 + 1);
     for (int x = x0; x <= x1; ++x) {
         float fx = fabsf((x - dimageX) *
-                         filter->invXWidth * FILTER_TABLE_SIZE);
+                         filter.invXWidth * FILTER_TABLE_SIZE);
         ifx[x-x0] = min(Floor2Int(fx), FILTER_TABLE_SIZE-1);
     }
     int *ify = ALLOCA(int, y1 - y0 + 1);
     for (int y = y0; y <= y1; ++y) {
         float fy = fabsf((y - dimageY) *
-                         filter->invYWidth * FILTER_TABLE_SIZE);
+                         filter.invYWidth * FILTER_TABLE_SIZE);
         ify[y-y0] = min(Floor2Int(fy), FILTER_TABLE_SIZE-1);
     }
-    bool syncNeeded = (filter->xWidth > 0.5f || filter->yWidth > 0.5f);
+    bool syncNeeded = (filter.xWidth > 0.5f || filter.yWidth > 0.5f);
     for (int y = y0; y <= y1; ++y) {
         for (int x = x0; x <= x1; ++x) {
             // Evaluate filter value at $(x,y)$ pixel
@@ -156,13 +157,13 @@ void ImageFilm::Splat(const CameraSample &sample, const Spectrum &L) {
 
 void ImageFilm::GetSampleExtent(int *xstart, int *xend,
                                 int *ystart, int *yend) const {
-    *xstart = Floor2Int(xPixelStart + 0.5f - filter->xWidth);
+    *xstart = Floor2Int(xPixelStart + 0.5f - filter.xWidth);
     *xend   = Ceil2Int(xPixelStart + 0.5f + xPixelCount +
-                       filter->xWidth);
+                       filter.xWidth);
 
-    *ystart = Floor2Int(yPixelStart + 0.5f - filter->yWidth);
+    *ystart = Floor2Int(yPixelStart + 0.5f - filter.yWidth);
     *yend   = Ceil2Int(yPixelStart + 0.5f + yPixelCount +
-                       filter->yWidth);
+                       filter.yWidth);
 }
 
 
@@ -218,7 +219,7 @@ void ImageFilm::UpdateDisplay(int x0, int y0, int x1, int y1,
 }
 
 
-ImageFilm *CreateImageFilm(const ParamSet &params, Filter *filter) {
+ImageFilm *CreateImageFilm(const ParamSet &params, const Filter& filter) {
     string filename = params.FindOneString("filename", "");
     if (PbrtOptions.imageFile != "") {
         if (filename != "") {

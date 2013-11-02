@@ -125,6 +125,7 @@
 #include "volumes/homogeneous.h"
 #include "volumes/volumegrid.h"
 #include <map>
+#include <boost/optional.hpp>
  #if (_MSC_VER >= 1400)
  #include <stdio.h>
  #define snprintf _snprintf
@@ -640,28 +641,27 @@ Sampler *MakeSampler(const string &name,
 }
 
 
-Filter *MakeFilter(const string &name,
+boost::optional<Filter> MakeFilter(const string &name,
     const ParamSet &paramSet) {
-    Filter *filter = NULL;
     if (name == "box")
-        filter = CreateBoxFilter(paramSet);
+        return boost::make_optional(CreateBoxFilter(paramSet));
     else if (name == "gaussian")
-        filter = CreateGaussianFilter(paramSet);
+        return boost::make_optional(CreateGaussianFilter(paramSet));
     else if (name == "mitchell")
-        filter = CreateMitchellFilter(paramSet);
+        return boost::make_optional(CreateMitchellFilter(paramSet));
     else if (name == "sinc")
-        filter = CreateSincFilter(paramSet);
+        return boost::make_optional(CreateSincFilter(paramSet));
     else if (name == "triangle")
-        filter = CreateTriangleFilter(paramSet);
+        return boost::make_optional(CreateTriangleFilter(paramSet));
     else
         Warning("Filter \"%s\" unknown.", name.c_str());
     paramSet.ReportUnused();
-    return filter;
+    return boost::optional<Filter>();
 }
 
 
 Film *MakeFilm(const string &name,
-    const ParamSet &paramSet, Filter *filter) {
+    const ParamSet &paramSet, Filter const& filter) {
     Film *film = NULL;
     if (name == "image")
         film = CreateImageFilm(paramSet, filter);
@@ -1270,7 +1270,8 @@ Renderer *RenderOptions::MakeRenderer() const {
 
 
 Camera *RenderOptions::MakeCamera() const {
-    Filter *filter = MakeFilter(FilterName, FilterParams);
+    Filter filter = MakeFilter(FilterName, FilterParams)
+                      .get_value_or(CreateBoxFilter(FilterParams));
     Film *film = MakeFilm(FilmName, FilmParams, filter);
     if (!film) Severe("Unable to create film.");
     Camera *camera = ::MakeCamera(CameraName, CameraParams,

@@ -47,11 +47,10 @@
 class ImageFilm : public Film {
 public:
     // ImageFilm Public Methods
-    ImageFilm(int xres, int yres, Filter *filt, const float crop[4],
+    ImageFilm(int xres, int yres, const Filter& filt, const float crop[4],
               const string &filename, bool openWindow);
     ~ImageFilm() {
         delete pixels;
-        delete filter;
         delete[] filterTable;
     }
     void AddSample(const CameraSample &sample, const Spectrum &L);
@@ -62,7 +61,7 @@ public:
     void UpdateDisplay(int x0, int y0, int x1, int y1, float splatScale);
 private:
     // ImageFilm Private Data
-    Filter *filter;
+    Filter filter;
     float cropWindow[4];
     string filename;
     int xPixelStart, yPixelStart, xPixelCount, yPixelCount;
@@ -81,6 +80,6 @@ private:
 };
 
 
-ImageFilm *CreateImageFilm(const ParamSet &params, Filter *filter);
+ImageFilm *CreateImageFilm(const ParamSet& params, const Filter& filter);
 
 #endif // PBRT_FILM_IMAGE_H
