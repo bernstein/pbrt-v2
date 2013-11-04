@@ -1197,7 +1197,7 @@ Scene RenderOptions::MakeScene() {
         accelerator = MakeAccelerator("bvh", primitives, ParamSet());
     if (!accelerator)
         Severe("Unable to create \"bvh\" accelerator.");
-    Scene scene = Scene(accelerator, lights, volumeRegion);
+    Scene scene(accelerator, lights, volumeRegion);
     // Erase primitives, lights, and volume regions from _RenderOptions_
     primitives.erase(primitives.begin(), primitives.end());
     lights.erase(lights.begin(), lights.end());
