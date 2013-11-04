@@ -59,11 +59,11 @@ class IGIIntegrator : public SurfaceIntegrator {
 public:
     // IGIIntegrator Public Methods
     ~IGIIntegrator();
-    Spectrum Li(const Scene *scene, const Renderer *renderer,
+    Spectrum Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
-    void RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene);
-    void Preprocess(const Scene *, const Camera *, const Renderer *);
+    void RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene);
+    void Preprocess(const Scene &, const Camera *, const Renderer *);
     IGIIntegrator(uint32_t nl, uint32_t ns, float rrt, int maxd, float gl, int ng) {
         nLightPaths = RoundUpPow2(nl);
         nLightSets = RoundUpPow2(ns);

@@ -166,7 +166,7 @@ private:
 struct RenderOptions {
     // RenderOptions Public Methods
     RenderOptions();
-    Scene *MakeScene();
+    Scene MakeScene();
     Camera *MakeCamera() const;
     Renderer *MakeRenderer() const;
 
@@ -1162,11 +1162,10 @@ void pbrtWorldEnd() {
 
     // Create scene and render
     Renderer *renderer = renderOptions->MakeRenderer();
-    Scene *scene = renderOptions->MakeScene();
-    if (scene && renderer) renderer->Render(scene);
+    Scene scene = renderOptions->MakeScene();
+    if (renderer) renderer->Render(scene);
     TasksCleanup();
     delete renderer;
-    delete scene;
 
     // Clean up after rendering
     graphicsState = GraphicsState();
@@ -1183,7 +1182,7 @@ void pbrtWorldEnd() {
 }
 
 
-Scene *RenderOptions::MakeScene() {
+Scene RenderOptions::MakeScene() {
     // Initialize _volumeRegion_ from volume region(s)
     VolumeRegion *volumeRegion;
     if (volumeRegions.size() == 0)
@@ -1198,7 +1197,7 @@ Scene *RenderOptions::MakeScene() {
         accelerator = MakeAccelerator("bvh", primitives, ParamSet());
     if (!accelerator)
         Severe("Unable to create \"bvh\" accelerator.");
-    Scene *scene = new Scene(accelerator, lights, volumeRegion);
+    Scene scene = Scene(accelerator, lights, volumeRegion);
     // Erase primitives, lights, and volume regions from _RenderOptions_
     primitives.erase(primitives.begin(), primitives.end());
     lights.erase(lights.begin(), lights.end());

@@ -44,13 +44,15 @@
 
 // IrradianceCacheIntegrator Local Declarations
 struct IrradiancePrimeTask : public Task {
-    IrradiancePrimeTask(const Scene *sc, const Renderer *sr, const Camera *c, Sampler *samp,
+    IrradiancePrimeTask(const Scene &sc, const Renderer *sr, const Camera *c, Sampler *samp,
                         Sample *s, IrradianceCacheIntegrator *ic, ProgressReporter &pr,
-                        int tn, int nt) : progress(pr) {
-        scene = sc;
-        renderer = sr;
-        camera = c;
-        origSample = s;
+                        int tn, int nt)
+      : progress(pr)
+      , scene(sc)
+      , renderer(sr)
+      , camera(c)
+      , origSample(s)
+    {
         sampler = samp->GetSubSampler(tn, nt);
         irradianceCache = ic;
         taskNum = tn;
@@ -58,7 +60,7 @@ struct IrradiancePrimeTask : public Task {
     }
     void Run();
 
-    const Scene *scene;
+    const Scene &scene;
     const Camera *camera;
     const Renderer *renderer;
     Sampler *sampler;
@@ -116,14 +118,14 @@ struct IrradianceSample {
 
 // IrradianceCacheIntegrator Method Definitions
 void IrradianceCacheIntegrator::RequestSamples(Sampler *sampler,
-        Sample *sample, const Scene *scene) {
+        Sample *sample, const Scene &scene) {
 //    if (lightSampleOffsets != NULL) return;
     // Allocate and request samples for sampling all lights
-    uint32_t nLights = scene->lights.size();
+    uint32_t nLights = scene.lights.size();
     lightSampleOffsets = new LightSampleOffsets[nLights];
     bsdfSampleOffsets = new BSDFSampleOffsets[nLights];
     for (uint32_t i = 0; i < nLights; ++i) {
-        const Light *light = scene->lights[i];
+        const Light *light = scene.lights[i];
         int nSamples = light->nSamples;
         if (sampler) nSamples = sampler->RoundSize(nSamples);
         lightSampleOffsets[i] = LightSampleOffsets(nSamples, sample);
@@ -132,9 +134,9 @@ void IrradianceCacheIntegrator::RequestSamples(Sampler *sampler,
 }
 
 
-void IrradianceCacheIntegrator::Preprocess(const Scene *scene,
+void IrradianceCacheIntegrator::Preprocess(const Scene &scene,
         const Camera *camera, const Renderer *renderer) {
-    BBox wb = scene->WorldBound();
+    BBox wb = scene.WorldBound();
     Vector delta = .01f * (wb.pMax - wb.pMin);
     wb.pMin -= delta;
     wb.pMax += delta;
@@ -183,7 +185,7 @@ void IrradiancePrimeTask::Run() {
             RayDifferential ray;
             camera->GenerateRayDifferential(samples[i], &ray);
             Intersection isect;
-            if (scene->Intersect(ray, &isect))
+            if (scene.Intersect(ray, &isect))
                 (void)irradianceCache->Li(scene, renderer, ray, isect, &samples[i], rng, arena);
         }
         arena.FreeAll();
@@ -194,7 +196,7 @@ void IrradiancePrimeTask::Run() {
 }
 
 
-Spectrum IrradianceCacheIntegrator::Li(const Scene *scene,
+Spectrum IrradianceCacheIntegrator::Li(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.);
@@ -238,7 +240,7 @@ Spectrum IrradianceCacheIntegrator::Li(const Scene *scene,
 Spectrum IrradianceCacheIntegrator::indirectLo(const Point &p,
         const Normal &ng, float pixelSpacing, const Vector &wo,
         float rayEpsilon, BSDF *bsdf, BxDFType flags, RNG &rng,
-        const Scene *scene, const Renderer *renderer,
+        const Scene &scene, const Renderer *renderer,
         MemoryArena &arena) const {
     if (bsdf->NumComponents(flags) == 0)
         return Spectrum(0.);
@@ -295,7 +297,7 @@ Spectrum IrradianceCacheIntegrator::indirectLo(const Point &p,
 }
 
 
-bool IrradianceCacheIntegrator::interpolateE(const Scene *scene,
+bool IrradianceCacheIntegrator::interpolateE(const Scene &scene,
         const Point &p, const Normal &n, Spectrum *E,
         Vector *wi) const {
     if (!octree) return false;
@@ -330,7 +332,7 @@ bool IrradProcess::operator()(const IrradianceSample *sample) {
 }
 
 
-Spectrum IrradianceCacheIntegrator::pathL(Ray &r, const Scene *scene,
+Spectrum IrradianceCacheIntegrator::pathL(Ray &r, const Scene &scene,
         const Renderer *renderer, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.f);
     Spectrum pathThroughput = 1.;
@@ -339,7 +341,7 @@ Spectrum IrradianceCacheIntegrator::pathL(Ray &r, const Scene *scene,
     for (int pathLength = 0; ; ++pathLength) {
         // Find next vertex of path
         Intersection isect;
-        if (!scene->Intersect(ray, &isect))
+        if (!scene.Intersect(ray, &isect))
             break;
         if (pathLength == 0)
             r.maxt = ray.maxt;

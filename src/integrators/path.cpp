@@ -39,7 +39,7 @@
 
 // PathIntegrator Method Definitions
 void PathIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
-                                    const Scene *scene) {
+                                    const Scene &scene) {
     for (int i = 0; i < SAMPLE_DEPTH; ++i) {
         lightSampleOffsets[i] = LightSampleOffsets(1, sample);
         lightNumOffset[i] = sample->Add1D(1);
@@ -49,7 +49,7 @@ void PathIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
 }
 
 
-Spectrum PathIntegrator::Li(const Scene *scene, const Renderer *renderer,
+Spectrum PathIntegrator::Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &r, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
     // Declare common path integration variables
@@ -110,10 +110,10 @@ Spectrum PathIntegrator::Li(const Scene *scene, const Renderer *renderer,
             break;
 
         // Find next vertex of path
-        if (!scene->Intersect(ray, &localIsect)) {
+        if (!scene.Intersect(ray, &localIsect)) {
             if (specularBounce)
-                for (uint32_t i = 0; i < scene->lights.size(); ++i)
-                   L += pathThroughput * scene->lights[i]->Le(ray);
+                for (uint32_t i = 0; i < scene.lights.size(); ++i)
+                   L += pathThroughput * scene.lights[i]->Le(ray);
             break;
         }
         pathThroughput *= renderer->Transmittance(scene, ray, NULL, rng, arena);

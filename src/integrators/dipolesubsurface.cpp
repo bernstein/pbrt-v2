@@ -179,13 +179,13 @@ DipoleSubsurfaceIntegrator::~DipoleSubsurfaceIntegrator() {
 
 
 void DipoleSubsurfaceIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
-        const Scene *scene) {
+        const Scene &scene) {
     // Allocate and request samples for sampling all lights
-    uint32_t nLights = scene->lights.size();
+    uint32_t nLights = scene.lights.size();
     lightSampleOffsets = new LightSampleOffsets[nLights];
     bsdfSampleOffsets = new BSDFSampleOffsets[nLights];
     for (uint32_t i = 0; i < nLights; ++i) {
-        const Light *light = scene->lights[i];
+        const Light *light = scene.lights[i];
         int nSamples = light->nSamples;
         if (sampler) nSamples = sampler->RoundSize(nSamples);
         lightSampleOffsets[i] = LightSampleOffsets(nSamples, sample);
@@ -194,9 +194,9 @@ void DipoleSubsurfaceIntegrator::RequestSamples(Sampler *sampler, Sample *sample
 }
 
 
-void DipoleSubsurfaceIntegrator::Preprocess(const Scene *scene,
+void DipoleSubsurfaceIntegrator::Preprocess(const Scene &scene,
         const Camera *camera, const Renderer *renderer) {
-    if (scene->lights.size() == 0) return;
+    if (scene.lights.size() == 0) return;
     vector<SurfacePoint> pts;
     // Get _SurfacePoint_s for translucent objects in scene
     if (filename != "") {
@@ -227,9 +227,9 @@ void DipoleSubsurfaceIntegrator::Preprocess(const Scene *scene,
     for (uint32_t i = 0; i < pts.size(); ++i) {
         SurfacePoint &sp = pts[i];
         Spectrum E(0.f);
-        for (uint32_t j = 0; j < scene->lights.size(); ++j) {
+        for (uint32_t j = 0; j < scene.lights.size(); ++j) {
             // Add irradiance from light at point
-            const Light *light = scene->lights[j];
+            const Light *light = scene.lights[j];
             Spectrum Elight = 0.f;
             int nSamples = RoundUpPow2(light->nSamples);
             uint32_t scramble[2] = { rng.RandomUInt(), rng.RandomUInt() };
@@ -270,7 +270,7 @@ void DipoleSubsurfaceIntegrator::Preprocess(const Scene *scene,
 }
 
 
-Spectrum DipoleSubsurfaceIntegrator::Li(const Scene *scene, const Renderer *renderer,
+Spectrum DipoleSubsurfaceIntegrator::Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.);

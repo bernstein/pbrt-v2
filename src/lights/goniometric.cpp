@@ -63,7 +63,7 @@ GonioPhotometricLight::GonioPhotometricLight(const Transform &light2world,
 }
 
 
-Spectrum GonioPhotometricLight::Power(const Scene *) const {
+Spectrum GonioPhotometricLight::Power(const Scene &) const {
     return 4.f * M_PI * Intensity *
         Spectrum(mipmap ? mipmap->Lookup(.5f, .5f, .5f) : 1.f, SPECTRUM_ILLUMINANT);
 }
@@ -78,7 +78,7 @@ GonioPhotometricLight *CreateGoniometricLight(const Transform &light2world,
 }
 
 
-Spectrum GonioPhotometricLight::Sample_L(const Scene *scene, const LightSample &ls,
+Spectrum GonioPhotometricLight::Sample_L(const Scene &scene, const LightSample &ls,
         float u1, float u2, float time, Ray *ray, Normal *Ns, float *pdf) const {
     *ray = Ray(lightPos, UniformSampleSphere(ls.uPos[0], ls.uPos[1]), 0.f, INFINITY, time);
     *Ns = (Normal)ray->d;

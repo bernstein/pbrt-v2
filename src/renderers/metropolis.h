@@ -55,23 +55,23 @@ public:
         bool doDirectSeparately, int maxConsecutiveRejects, int maxDepth,
         Camera *camera, bool doBidirectional);
     ~MetropolisRenderer();
-    void Render(const Scene *scene);
-    Spectrum Li(const Scene *scene, const RayDifferential &ray,
+    void Render(const Scene &scene);
+    Spectrum Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena,
         Intersection *isect = NULL, Spectrum *T = NULL) const;
-    Spectrum Transmittance(const Scene *scene, const RayDifferential &ray,
+    Spectrum Transmittance(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
 private:
     // MetropolisRenderer Private Methods
-    Spectrum PathL(const MLTSample &sample, const Scene *scene,
+    Spectrum PathL(const MLTSample &sample, const Scene &scene,
         MemoryArena &arena, const Camera *camera,
         const Distribution1D *lightDistribution, PathVertex *cameraPath,
         PathVertex *lightPath, RNG &rng) const;
-    Spectrum Lpath(const Scene *scene, const PathVertex *path, int pathLength,
+    Spectrum Lpath(const Scene &scene, const PathVertex *path, int pathLength,
         MemoryArena &arena, const vector<LightingSample> &samples,
         RNG &rng, float time, const Distribution1D *lightDistribution,
         const RayDifferential &escapedRay, const Spectrum &escapedAlpha) const;
-    Spectrum Lbidir(const Scene *scene,
+    Spectrum Lbidir(const Scene &scene,
         const PathVertex *cameraPath, int cameraPathLength,
         const PathVertex *lightPath, int lightPathLength,
         MemoryArena &arena, const vector<LightingSample> &samples,

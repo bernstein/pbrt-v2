@@ -69,7 +69,7 @@ float SpotLight::Falloff(const Vector &w) const {
 }
 
 
-Spectrum SpotLight::Power(const Scene *) const {
+Spectrum SpotLight::Power(const Scene &) const {
     return Intensity * 2.f * M_PI *
            (1.f - .5f * (cosFalloffStart + cosTotalWidth));
 }
@@ -103,7 +103,7 @@ float SpotLight::Pdf(const Point &, const Vector &) const {
 }
 
 
-Spectrum SpotLight::Sample_L(const Scene *scene, const LightSample &ls,
+Spectrum SpotLight::Sample_L(const Scene &scene, const LightSample &ls,
         float u1, float u2, float time, Ray *ray, Normal *Ns,
         float *pdf) const {
     Vector v = UniformSampleCone(ls.uPos[0], ls.uPos[1], cosTotalWidth);

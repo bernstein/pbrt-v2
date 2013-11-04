@@ -58,11 +58,11 @@ AggregateTest *CreateAggregateTestRenderer(const ParamSet &params,
 }
 
 
-void AggregateTest::Render(const Scene *scene) {
+void AggregateTest::Render(const Scene &scene) {
     RNG rng;
     ProgressReporter prog(nIterations, "Aggregate Test");
     // Compute bounding box of region used to generate random rays
-    BBox bbox = scene->WorldBound();
+    BBox bbox = scene.WorldBound();
     bbox.Expand(bbox.pMax[bbox.MaximumExtent()] -
                 bbox.pMin[bbox.MaximumExtent()]);
     Point lastHit;
@@ -91,7 +91,7 @@ void AggregateTest::Render(const Scene *scene) {
 
         // Compute intersections using accelerator and exhaustive testing
         Intersection isectAccel, isectAll;
-        bool hitAccel = scene->Intersect(rayAccel, &isectAccel);
+        bool hitAccel = scene.Intersect(rayAccel, &isectAccel);
         bool hitAll = false;
         bool inconsistentBounds = false;
         for (uint32_t j = 0; j < primitives.size(); ++j) {
@@ -119,14 +119,14 @@ void AggregateTest::Render(const Scene *scene) {
 }
 
 
-Spectrum AggregateTest::Li(const Scene *scene, const RayDifferential &ray,
+Spectrum AggregateTest::Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena, Intersection *isect,
         Spectrum *T) const {
     return 0.f;
 }
 
 
-Spectrum AggregateTest::Transmittance(const Scene *scene,
+Spectrum AggregateTest::Transmittance(const Scene &scene,
         const RayDifferential &ray, const Sample *sample, RNG &rng,
         MemoryArena &arena) const {
     return 0.f;

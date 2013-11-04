@@ -193,7 +193,7 @@ struct PathVertex {
 
 
 static uint32_t GeneratePath(const RayDifferential &r, const Spectrum &alpha,
-    const Scene *scene, MemoryArena &arena, const vector<PathSample> &samples,
+    const Scene &scene, MemoryArena &arena, const vector<PathSample> &samples,
     PathVertex *path, RayDifferential *escapedRay,
     Spectrum *escapedAlpha);
 inline float I(const Spectrum &L);
@@ -201,7 +201,7 @@ class MLTTask : public Task {
 public:
     MLTTask(ProgressReporter &prog, uint32_t pfreq, uint32_t taskNum,
         float dx, float dy, int xx0, int xx1, int yy0, int yy1, float tt0, float tt1,
-        float bb, const MLTSample &is, const Scene *sc, const Camera *c,
+        float bb, const MLTSample &is, const Scene &sc, const Camera *c,
         MetropolisRenderer *renderer, Mutex *filmMutex,
         Distribution1D *lightDistribution);
     void Run();
@@ -215,7 +215,7 @@ private:
     float t0, t1;
     float b;
     const MLTSample &initialSample;
-    const Scene *scene;
+    const Scene &scene;
     const Camera *camera;
     MetropolisRenderer *renderer;
     Mutex *filmMutex;
@@ -226,7 +226,7 @@ private:
 
 // Metropolis Method Definitions
 static uint32_t GeneratePath(const RayDifferential &r,
-        const Spectrum &a, const Scene *scene, MemoryArena &arena,
+        const Spectrum &a, const Scene &scene, MemoryArena &arena,
         const vector<PathSample> &samples, PathVertex *path,
         RayDifferential *escapedRay, Spectrum *escapedAlpha) {
     PBRT_MLT_STARTED_GENERATE_PATH();
@@ -237,7 +237,7 @@ static uint32_t GeneratePath(const RayDifferential &r,
     for (; length < samples.size(); ++length) {
         // Try to generate next vertex of ray path
         PathVertex &v = path[length];
-        if (!scene->Intersect(ray, &v.isect)) {
+        if (!scene.Intersect(ray, &v.isect)) {
             // Handle ray that leaves the scene during path generation
             if (escapedAlpha) *escapedAlpha = alpha;
             if (escapedRay)   *escapedRay = ray;
@@ -284,7 +284,7 @@ static uint32_t GeneratePath(const RayDifferential &r,
 
 
 Spectrum MetropolisRenderer::PathL(const MLTSample &sample,
-        const Scene *scene, MemoryArena &arena, const Camera *camera,
+        const Scene &scene, MemoryArena &arena, const Camera *camera,
         const Distribution1D *lightDistribution,
         PathVertex *cameraPath, PathVertex *lightPath,
         RNG &rng) const {
@@ -313,7 +313,7 @@ Spectrum MetropolisRenderer::PathL(const MLTSample &sample,
         float lightPdf, lightRayPdf;
         uint32_t lightNum = lightDistribution->SampleDiscrete(sample.lightNumSample,
                                                               &lightPdf);
-        const Light *light = scene->lights[lightNum];
+        const Light *light = scene.lights[lightNum];
         Ray lightRay;
         Normal Nl;
         LightSample lrs(sample.lightRaySamples[0], sample.lightRaySamples[1],
@@ -342,7 +342,7 @@ Spectrum MetropolisRenderer::PathL(const MLTSample &sample,
 }
 
 
-Spectrum MetropolisRenderer::Lpath(const Scene *scene,
+Spectrum MetropolisRenderer::Lpath(const Scene &scene,
         const PathVertex *cameraPath, int cameraPathLength,
         MemoryArena &arena, const vector<LightingSample> &samples,
         RNG &rng, float time, const Distribution1D *lightDistribution,
@@ -368,7 +368,7 @@ Spectrum MetropolisRenderer::Lpath(const Scene *scene,
             float lightPdf;
             uint32_t lightNum = lightDistribution->SampleDiscrete(ls.lightNum,
                                                                   &lightPdf);
-            const Light *light = scene->lights[lightNum];
+            const Light *light = scene.lights[lightNum];
             PBRT_MLT_STARTED_ESTIMATE_DIRECT();
             
             Ld = vc.alpha *
@@ -385,14 +385,14 @@ Spectrum MetropolisRenderer::Lpath(const Scene *scene,
     // Add contribution of escaped ray, if any
     if (!eAlpha.IsBlack() && previousSpecular &&
         (directLighting == NULL || !allSpecular))
-        for (uint32_t i = 0; i < scene->lights.size(); ++i)
-           L += eAlpha * scene->lights[i]->Le(eRay);
+        for (uint32_t i = 0; i < scene.lights.size(); ++i)
+           L += eAlpha * scene.lights[i]->Le(eRay);
     PBRT_MLT_FINISHED_LPATH();
     return L;
 }
 
 
-Spectrum MetropolisRenderer::Lbidir(const Scene *scene,
+Spectrum MetropolisRenderer::Lbidir(const Scene &scene,
         const PathVertex *cameraPath, int cameraPathLength,
         const PathVertex *lightPath, int lightPathLength,
         MemoryArena &arena, const vector<LightingSample> &samples,
@@ -429,7 +429,7 @@ Spectrum MetropolisRenderer::Lbidir(const Scene *scene,
             float lightPdf;
             uint32_t lightNum = lightDistribution->SampleDiscrete(ls.lightNum,
                                                                   &lightPdf);
-            const Light *light = scene->lights[lightNum];
+            const Light *light = scene.lights[lightNum];
             PBRT_MLT_STARTED_ESTIMATE_DIRECT();
             
             Ld = vc.alpha *
@@ -455,7 +455,7 @@ Spectrum MetropolisRenderer::Lbidir(const Scene *scene,
                     Spectrum fl = vl.bsdf->f(-w, vl.wPrev) * (1 + vl.nSpecularComponents);
                     if (fc.IsBlack() || fl.IsBlack()) continue;
                     Ray r(pc, pl - pc, 1e-3f, .999f, time);
-                    if (!scene->IntersectP(r)) {
+                    if (!scene.IntersectP(r)) {
                         // Compute weight for bidirectional path, _pathWt_
                         float pathWt = 1.f / (i + j + 2 - nSpecularVertices[i+j+2]);
                         float G = AbsDot(nc, w) * AbsDot(nl, w) / DistanceSquared(pl, pc);
@@ -468,8 +468,8 @@ Spectrum MetropolisRenderer::Lbidir(const Scene *scene,
     // Add contribution of escaped ray, if any
     if (!eAlpha.IsBlack() && previousSpecular &&
         (directLighting == NULL || !allSpecular))
-        for (uint32_t i = 0; i < scene->lights.size(); ++i)
-           L += eAlpha * scene->lights[i]->Le(eRay);
+        for (uint32_t i = 0; i < scene.lights.size(); ++i)
+           L += eAlpha * scene.lights[i]->Le(eRay);
     PBRT_MLT_FINISHED_LBIDIR();
     return L;
 }
@@ -532,9 +532,9 @@ MetropolisRenderer *CreateMetropolisRenderer(const ParamSet &params,
 }
 
 
-void MetropolisRenderer::Render(const Scene *scene) {
+void MetropolisRenderer::Render(const Scene &scene) {
     PBRT_MLT_STARTED_RENDERING();
-    if (scene->lights.size() > 0) {
+    if (scene.lights.size() > 0) {
         int x0, x1, y0, y1;
         camera->film->GetPixelExtent(&x0, &x1, &y0, &y1);
         float t0 = camera->shutterOpen, t1 = camera->shutterClose;
@@ -645,9 +645,12 @@ inline float I(const Spectrum &L) {
 
 MLTTask::MLTTask(ProgressReporter &prog, uint32_t pfreq, uint32_t tn,
         float ddx, float ddy, int xx0, int xx1, int yy0, int yy1, float tt0, float tt1,
-        float bb, const MLTSample &is, const Scene *sc, const Camera *c,
+        float bb, const MLTSample &is, const Scene &sc, const Camera *c,
         MetropolisRenderer *ren, Mutex *fm, Distribution1D *ld)
-    : progress(prog), initialSample(is) {
+    : progress(prog)
+    , initialSample(is)
+    , scene(sc)
+{
     progressUpdateFrequency = pfreq;
     taskNum = tn;
     dx = ddx;
@@ -660,7 +663,6 @@ MLTTask::MLTTask(ProgressReporter &prog, uint32_t pfreq, uint32_t tn,
     t1 = tt1;
     currentPixelSample = 0;
     b = bb;
-    scene = sc;
     camera = c;
     renderer = ren;
     filmMutex = fm;
@@ -782,25 +784,25 @@ void MLTTask::Run() {
 }
 
 
-Spectrum MetropolisRenderer::Li(const Scene *scene, const RayDifferential &ray,
+Spectrum MetropolisRenderer::Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena, Intersection *isect,
         Spectrum *T) const {
     Intersection localIsect;
     if (!isect) isect = &localIsect;
     Spectrum Lo = 0.f;
-    if (scene->Intersect(ray, isect))
+    if (scene.Intersect(ray, isect))
         Lo = directLighting->Li(scene, this, ray, *isect, sample,
                                 rng, arena);
     else {
         // Handle ray that doesn't intersect any geometry
-        for (uint32_t i = 0; i < scene->lights.size(); ++i)
-           Lo += scene->lights[i]->Le(ray);
+        for (uint32_t i = 0; i < scene.lights.size(); ++i)
+           Lo += scene.lights[i]->Le(ray);
     }
     return Lo;
 }
 
 
-Spectrum MetropolisRenderer::Transmittance(const Scene *scene, const RayDifferential &ray,
+Spectrum MetropolisRenderer::Transmittance(const Scene &scene, const RayDifferential &ray,
     const Sample *sample, RNG &rng, MemoryArena &arena) const {
     return 1.f;
 }

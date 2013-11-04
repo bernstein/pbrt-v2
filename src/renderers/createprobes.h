@@ -50,11 +50,11 @@ public:
         int nIndirSamples, bool includeDirect, bool includeIndirect,
         float time, const string &filename);
     ~CreateRadianceProbes();
-    void Render(const Scene *scene);
-    Spectrum Li(const Scene *scene, const RayDifferential &ray,
+    void Render(const Scene &scene);
+    Spectrum Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena, Intersection *isect,
         Spectrum *T) const;
-    Spectrum Transmittance(const Scene *scene, const RayDifferential &ray,
+    Spectrum Transmittance(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
 private:
     // CreateRadianceProbes Private Data

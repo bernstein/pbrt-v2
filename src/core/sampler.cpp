@@ -77,7 +77,7 @@ void Sampler::ComputeSubWindow(int num, int count, int *newXStart,
 
 // Sample Method Definitions
 Sample::Sample(Sampler *sampler, SurfaceIntegrator *surf,
-               VolumeIntegrator *vol, const Scene *scene) {
+               VolumeIntegrator *vol, const Scene &scene) {
     if (surf) surf->RequestSamples(sampler, this, scene);
     if (vol)  vol->RequestSamples(sampler, this, scene);
     AllocateSampleMemory();

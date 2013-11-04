@@ -51,7 +51,7 @@ DiffuseAreaLight::DiffuseAreaLight(const Transform &light2world,
 }
 
 
-Spectrum DiffuseAreaLight::Power(const Scene *) const {
+Spectrum DiffuseAreaLight::Power(const Scene &) const {
     return Lemit * area * M_PI;
 }
 
@@ -86,7 +86,7 @@ float DiffuseAreaLight::Pdf(const Point &p, const Vector &wi) const {
 }
 
 
-Spectrum DiffuseAreaLight::Sample_L(const Scene *scene,
+Spectrum DiffuseAreaLight::Sample_L(const Scene &scene,
         const LightSample &ls, float u1, float u2, float time,
         Ray *ray, Normal *Ns, float *pdf) const {
     PBRT_AREA_LIGHT_STARTED_SAMPLE();

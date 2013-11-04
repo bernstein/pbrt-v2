@@ -53,8 +53,8 @@ public:
         Vector *wi, float *pdf, VisibilityTester *vis) const;
     bool IsDeltaLight() const { return true; }
     Spectrum Projection(const Vector &w) const;
-    Spectrum Power(const Scene *) const;
-    Spectrum Sample_L(const Scene *scene, const LightSample &ls, float u1, float u2,
+    Spectrum Power(const Scene &) const;
+    Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
             float time, Ray *ray, Normal *Ns, float *pdf) const;
     float Pdf(const Point &, const Vector &) const;
 private:

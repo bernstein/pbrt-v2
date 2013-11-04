@@ -94,7 +94,7 @@ void SamplerRendererTask::Run() {
             // Evaluate radiance along camera ray
             PBRT_STARTED_CAMERA_RAY_INTEGRATION(&rays[i], &samples[i]);
             if (visualizeObjectIds) {
-                if (rayWeight > 0.f && scene->Intersect(rays[i], &isects[i])) {
+                if (rayWeight > 0.f && scene.Intersect(rays[i], &isects[i])) {
                     // random shading based on shape id...
                     uint32_t ids[2] = { isects[i].shapeId, isects[i].primitiveId };
                     uint32_t h = hash((char *)ids, sizeof(ids));
@@ -185,7 +185,7 @@ SamplerRenderer::~SamplerRenderer() {
 }
 
 
-void SamplerRenderer::Render(const Scene *scene) {
+void SamplerRenderer::Render(const Scene &scene) {
     PBRT_FINISHED_PARSING();
     // Allow integrators to do preprocessing for the scene
     PBRT_STARTED_PREPROCESSING();
@@ -222,7 +222,7 @@ void SamplerRenderer::Render(const Scene *scene) {
 }
 
 
-Spectrum SamplerRenderer::Li(const Scene *scene,
+Spectrum SamplerRenderer::Li(const Scene &scene,
         const RayDifferential &ray, const Sample *sample, RNG &rng,
         MemoryArena &arena, Intersection *isect, Spectrum *T) const {
     Assert(ray.time == sample->time);
@@ -233,13 +233,13 @@ Spectrum SamplerRenderer::Li(const Scene *scene,
     Intersection localIsect;
     if (!isect) isect = &localIsect;
     Spectrum Li = 0.f;
-    if (scene->Intersect(ray, isect))
+    if (scene.Intersect(ray, isect))
         Li = surfaceIntegrator->Li(scene, this, ray, *isect, sample,
                                    rng, arena);
     else {
         // Handle ray that doesn't intersect any geometry
-        for (uint32_t i = 0; i < scene->lights.size(); ++i)
-           Li += scene->lights[i]->Le(ray);
+        for (uint32_t i = 0; i < scene.lights.size(); ++i)
+           Li += scene.lights[i]->Le(ray);
     }
     Spectrum Lvi = volumeIntegrator->Li(scene, this, ray, sample, rng,
                                         T, arena);
@@ -247,7 +247,7 @@ Spectrum SamplerRenderer::Li(const Scene *scene,
 }
 
 
-Spectrum SamplerRenderer::Transmittance(const Scene *scene,
+Spectrum SamplerRenderer::Transmittance(const Scene &scene,
         const RayDifferential &ray, const Sample *sample, RNG &rng,
         MemoryArena &arena) const {
     return volumeIntegrator->Transmittance(scene, this, ray, sample,

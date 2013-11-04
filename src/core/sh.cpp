@@ -270,12 +270,12 @@ void SHWriteImage(const char *filename, const Spectrum *c, int lmax, int yres) {
 
 
 void SHProjectIncidentDirectRadiance(const Point &p, float pEpsilon,
-        float time, MemoryArena &arena, const Scene *scene,
+        float time, MemoryArena &arena, const Scene &scene,
         bool computeLightVis, int lmax, RNG &rng, Spectrum *c_d) {
     // Loop over light sources and sum their SH coefficients
     Spectrum *c = arena.Alloc<Spectrum>(SHTerms(lmax));
-    for (uint32_t i = 0; i < scene->lights.size(); ++i) {
-        Light *light = scene->lights[i];
+    for (uint32_t i = 0; i < scene.lights.size(); ++i) {
+        Light *light = scene.lights[i];
         light->SHProject(p, pEpsilon, lmax, scene, computeLightVis, time,
                          rng, c);
         for (int j = 0; j < SHTerms(lmax); ++j)
@@ -287,7 +287,7 @@ void SHProjectIncidentDirectRadiance(const Point &p, float pEpsilon,
 
 void SHProjectIncidentIndirectRadiance(const Point &p, float pEpsilon,
         float time, const Renderer *renderer, Sample *origSample,
-        const Scene *scene, int lmax, RNG &rng, int ns, Spectrum *c_i) {
+        const Scene &scene, int lmax, RNG &rng, int ns, Spectrum *c_i) {
     Sample *sample = origSample->Duplicate(1);
     MemoryArena arena;
     uint32_t scramble[2] = { rng.RandomUInt(), rng.RandomUInt() };
@@ -399,7 +399,7 @@ void SHConvolvePhong(int lmax, float n, const Spectrum *c_in,
 
 
 void SHComputeDiffuseTransfer(const Point &p, const Normal &n,
-        float rayEpsilon, const Scene *scene, RNG &rng, int nSamples,
+        float rayEpsilon, const Scene &scene, RNG &rng, int nSamples,
         int lmax, Spectrum *c_transfer) {
     for (int i = 0; i < SHTerms(lmax); ++i)
         c_transfer[i] = 0.f;
@@ -411,7 +411,7 @@ void SHComputeDiffuseTransfer(const Point &p, const Normal &n,
         Sample02(i, scramble, u);
         Vector w = UniformSampleSphere(u[0], u[1]);
         float pdf = UniformSpherePdf();
-        if (Dot(w, n) > 0.f && !scene->IntersectP(Ray(p, w, rayEpsilon))) {
+        if (Dot(w, n) > 0.f && !scene.IntersectP(Ray(p, w, rayEpsilon))) {
             // Accumulate contribution of direction $\w{}$ to transfer coefficients
             SHEvaluate(w, lmax, Ylm);
             for (int j = 0; j < SHTerms(lmax); ++j)
@@ -422,7 +422,7 @@ void SHComputeDiffuseTransfer(const Point &p, const Normal &n,
 
 
 void SHComputeTransferMatrix(const Point &p, float rayEpsilon,
-        const Scene *scene, RNG &rng, int nSamples, int lmax,
+        const Scene &scene, RNG &rng, int nSamples, int lmax,
         Spectrum *T) {
     for (int i = 0; i < SHTerms(lmax)*SHTerms(lmax); ++i)
         T[i] = 0.f;
@@ -434,7 +434,7 @@ void SHComputeTransferMatrix(const Point &p, float rayEpsilon,
         Sample02(i, scramble, u);
         Vector w = UniformSampleSphere(u[0], u[1]);
         float pdf = UniformSpherePdf();
-        if (!scene->IntersectP(Ray(p, w, rayEpsilon))) {
+        if (!scene.IntersectP(Ray(p, w, rayEpsilon))) {
             // Update transfer matrix for unoccluded direction
             SHEvaluate(w, lmax, Ylm);
             for (int j = 0; j < SHTerms(lmax); ++j)

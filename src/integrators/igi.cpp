@@ -49,13 +49,13 @@ IGIIntegrator::~IGIIntegrator() {
 
 
 void IGIIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
-                                   const Scene *scene) {
+                                   const Scene &scene) {
     // Allocate and request samples for sampling all lights
-    uint32_t nLights = scene->lights.size();
+    uint32_t nLights = scene.lights.size();
     lightSampleOffsets = new LightSampleOffsets[nLights];
     bsdfSampleOffsets = new BSDFSampleOffsets[nLights];
     for (uint32_t i = 0; i < nLights; ++i) {
-        const Light *light = scene->lights[i];
+        const Light *light = scene.lights[i];
         int nSamples = light->nSamples;
         if (sampler) nSamples = sampler->RoundSize(nSamples);
         lightSampleOffsets[i] = LightSampleOffsets(nSamples, sample);
@@ -68,9 +68,9 @@ void IGIIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
 }
 
 
-void IGIIntegrator::Preprocess(const Scene *scene, const Camera *camera,
+void IGIIntegrator::Preprocess(const Scene &scene, const Camera *camera,
                                const Renderer *renderer) {
-    if (scene->lights.size() == 0) return;
+    if (scene.lights.size() == 0) return;
     MemoryArena arena;
     RNG rng;
     // Compute samples for emitted rays from lights
@@ -94,7 +94,7 @@ void IGIIntegrator::Preprocess(const Scene *scene, const Camera *camera,
             float lightPdf;
             int ln = lightDistribution->SampleDiscrete(lightNum[sampOffset],
                                                        &lightPdf);
-            Light *light = scene->lights[ln];
+            Light *light = scene.lights[ln];
 
             // Sample ray leaving light source for virtual light path
             RayDifferential ray;
@@ -108,7 +108,7 @@ void IGIIntegrator::Preprocess(const Scene *scene, const Camera *camera,
             if (pdf == 0.f || alpha.IsBlack()) continue;
             alpha /= pdf * lightPdf;
             Intersection isect;
-            while (scene->Intersect(ray, &isect) && !alpha.IsBlack()) {
+            while (scene.Intersect(ray, &isect) && !alpha.IsBlack()) {
                 // Create virtual light and sample new ray for path
                 alpha *= renderer->Transmittance(scene, RayDifferential(ray), NULL,
                                                  rng, arena);
@@ -143,7 +143,7 @@ void IGIIntegrator::Preprocess(const Scene *scene, const Camera *camera,
 }
 
 
-Spectrum IGIIntegrator::Li(const Scene *scene, const Renderer *renderer,
+Spectrum IGIIntegrator::Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.);
@@ -184,7 +184,7 @@ Spectrum IGIIntegrator::Li(const Scene *scene, const Renderer *renderer,
         }
 
         // Add contribution from _VirtualLight_ _vl_
-        if (!scene->IntersectP(connectRay))
+        if (!scene.IntersectP(connectRay))
             L += Llight;
     }
     if (ray.depth < maxSpecularDepth) {

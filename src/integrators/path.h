@@ -44,10 +44,10 @@
 class PathIntegrator : public SurfaceIntegrator {
 public:
     // PathIntegrator Public Methods
-    Spectrum Li(const Scene *scene, const Renderer *renderer,
+    Spectrum Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
-    void RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene);
+    void RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene);
     PathIntegrator(int md) { maxDepth = md; }
 private:
     // PathIntegrator Private Data

@@ -44,15 +44,15 @@ Integrator::~Integrator() {
 
 
 // Integrator Utility Functions
-Spectrum UniformSampleAllLights(const Scene *scene,
+Spectrum UniformSampleAllLights(const Scene &scene,
         const Renderer *renderer, MemoryArena &arena, const Point &p,
         const Normal &n, const Vector &wo, float rayEpsilon,
         float time, BSDF *bsdf, const Sample *sample, RNG &rng,
         const LightSampleOffsets *lightSampleOffsets,
         const BSDFSampleOffsets *bsdfSampleOffsets) {
     Spectrum L(0.);
-    for (uint32_t i = 0; i < scene->lights.size(); ++i) {
-        Light *light = scene->lights[i];
+    for (uint32_t i = 0; i < scene.lights.size(); ++i) {
+        Light *light = scene.lights[i];
         int nSamples = lightSampleOffsets ?
                        lightSampleOffsets[i].nSamples : 1;
         // Estimate direct lighting from _light_ samples
@@ -79,14 +79,14 @@ Spectrum UniformSampleAllLights(const Scene *scene,
 }
 
 
-Spectrum UniformSampleOneLight(const Scene *scene,
+Spectrum UniformSampleOneLight(const Scene &scene,
         const Renderer *renderer, MemoryArena &arena, const Point &p,
         const Normal &n, const Vector &wo, float rayEpsilon, float time,
         BSDF *bsdf, const Sample *sample, RNG &rng, int lightNumOffset,
         const LightSampleOffsets *lightSampleOffset,
         const BSDFSampleOffsets *bsdfSampleOffset) {
     // Randomly choose a single light to sample, _light_
-    int nLights = int(scene->lights.size());
+    int nLights = int(scene.lights.size());
     if (nLights == 0) return Spectrum(0.);
     int lightNum;
     if (lightNumOffset != -1)
@@ -94,7 +94,7 @@ Spectrum UniformSampleOneLight(const Scene *scene,
     else
         lightNum = Floor2Int(rng.RandomFloat() * nLights);
     lightNum = min(lightNum, nLights-1);
-    Light *light = scene->lights[lightNum];
+    Light *light = scene.lights[lightNum];
 
     // Initialize light and bsdf samples for single light sample
     LightSample lightSample;
@@ -114,7 +114,7 @@ Spectrum UniformSampleOneLight(const Scene *scene,
 }
 
 
-Spectrum EstimateDirect(const Scene *scene, const Renderer *renderer,
+Spectrum EstimateDirect(const Scene &scene, const Renderer *renderer,
         MemoryArena &arena, const Light *light, const Point &p,
         const Normal &n, const Vector &wo, float rayEpsilon, float time,
         const BSDF *bsdf, RNG &rng, const LightSample &lightSample,
@@ -158,7 +158,7 @@ Spectrum EstimateDirect(const Scene *scene, const Renderer *renderer,
             Intersection lightIsect;
             Spectrum Li(0.f);
             RayDifferential ray(p, wi, rayEpsilon, INFINITY, time);
-            if (scene->Intersect(ray, &lightIsect)) {
+            if (scene.Intersect(ray, &lightIsect)) {
                 if (lightIsect.primitive->GetAreaLight() == light)
                     Li = lightIsect.Le(-wi);
             }
@@ -176,7 +176,7 @@ Spectrum EstimateDirect(const Scene *scene, const Renderer *renderer,
 
 Spectrum SpecularReflect(const RayDifferential &ray, BSDF *bsdf,
         RNG &rng, const Intersection &isect, const Renderer *renderer,
-        const Scene *scene, const Sample *sample, MemoryArena &arena) {
+        const Scene &scene, const Sample *sample, MemoryArena &arena) {
     Vector wo = -ray.d, wi;
     float pdf;
     const Point &p = bsdf->dgShading.p;
@@ -215,7 +215,7 @@ Spectrum SpecularReflect(const RayDifferential &ray, BSDF *bsdf,
 
 Spectrum SpecularTransmit(const RayDifferential &ray, BSDF *bsdf,
         RNG &rng, const Intersection &isect, const Renderer *renderer,
-        const Scene *scene, const Sample *sample, MemoryArena &arena) {
+        const Scene &scene, const Sample *sample, MemoryArena &arena) {
     Vector wo = -ray.d, wi;
     float pdf;
     const Point &p = bsdf->dgShading.p;
@@ -258,12 +258,12 @@ Spectrum SpecularTransmit(const RayDifferential &ray, BSDF *bsdf,
 }
 
 
-Distribution1D *ComputeLightSamplingCDF(const Scene *scene) {
-    uint32_t nLights = int(scene->lights.size());
+Distribution1D *ComputeLightSamplingCDF(const Scene &scene) {
+    uint32_t nLights = int(scene.lights.size());
     Assert(nLights > 0);
     vector<float>lightPower(nLights, 0.f);
     for (uint32_t i = 0; i < nLights; ++i)
-        lightPower[i] = scene->lights[i]->Power(scene).y();
+        lightPower[i] = scene.lights[i]->Power(scene).y();
     return new Distribution1D(&lightPower[0], nLights);
 }
 

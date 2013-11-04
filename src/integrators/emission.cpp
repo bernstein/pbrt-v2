@@ -37,16 +37,16 @@
 
 // EmissionIntegrator Method Definitions
 void EmissionIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
-                                        const Scene *scene) {
+                                        const Scene &scene) {
     tauSampleOffset = sample->Add1D(1);
     scatterSampleOffset = sample->Add1D(1);
 }
 
 
-Spectrum EmissionIntegrator::Transmittance(const Scene *scene,
+Spectrum EmissionIntegrator::Transmittance(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
-    if (!scene->volumeRegion) return Spectrum(1.f);
+    if (!scene.volumeRegion) return Spectrum(1.f);
     float step, offset;
     if (sample) {
         step = stepSize;
@@ -56,16 +56,16 @@ Spectrum EmissionIntegrator::Transmittance(const Scene *scene,
         step = 4.f * stepSize;
         offset = rng.RandomFloat();
     }
-    Spectrum tau = scene->volumeRegion->tau(ray, step, offset);
+    Spectrum tau = scene.volumeRegion->tau(ray, step, offset);
     return Exp(-tau);
 }
 
 
-Spectrum EmissionIntegrator::Li(const Scene *scene,
+Spectrum EmissionIntegrator::Li(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Sample *sample, RNG &rng, Spectrum *T,
         MemoryArena &arena) const {
-    VolumeRegion *vr = scene->volumeRegion;
+    VolumeRegion *vr = scene.volumeRegion;
     Assert(sample != NULL);
     float t0, t1;
     if (!vr || !vr->IntersectP(ray, &t0, &t1) || (t1-t0) == 0.f) {

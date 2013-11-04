@@ -55,7 +55,7 @@ class CreateRadProbeTask : public Task {
 public:
     CreateRadProbeTask(int i, int nProbes[3], float t, const BBox &b, int lmax, bool id,
            bool ii, int nindir, ProgressReporter &p, Sample *sample,
-           const vector<Point> &sp, const Scene *sc, const Renderer *ren, Spectrum *c);
+           const vector<Point> &sp, const Scene &sc, const Renderer *ren, Spectrum *c);
     void Run();
 private:
     int pointNum, nProbes[3];
@@ -66,7 +66,7 @@ private:
     bool includeDirectInProbes, includeIndirectInProbes;
     Sample *origSample;
     const Renderer *renderer;
-    const Scene *scene;
+    const Scene &scene;
     const vector<Point> &surfacePoints;
     Spectrum *c_in;
 };
@@ -97,7 +97,7 @@ CreateRadianceProbes::~CreateRadianceProbes() {
 }
 
 
-Spectrum CreateRadianceProbes::Li(const Scene *scene, const RayDifferential &ray,
+Spectrum CreateRadianceProbes::Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena, Intersection *isect,
         Spectrum *T) const {
     Assert(ray.time == sample->time);
@@ -107,28 +107,28 @@ Spectrum CreateRadianceProbes::Li(const Scene *scene, const RayDifferential &ray
     if (!isect) isect = &localIsect;
     Assert(!ray.HasNaNs());
     Spectrum Lo = 0.f;
-    if (scene->Intersect(ray, isect))
+    if (scene.Intersect(ray, isect))
         Lo = surfaceIntegrator->Li(scene, this, ray, *isect, sample, rng, arena);
     else {
-        for (uint32_t i = 0; i < scene->lights.size(); ++i)
-           Lo += scene->lights[i]->Le(ray);
+        for (uint32_t i = 0; i < scene.lights.size(); ++i)
+           Lo += scene.lights[i]->Le(ray);
     }
     Spectrum Lv = volumeIntegrator->Li(scene, this, ray, sample, rng, T, arena);
     return *T * Lo + Lv;
 }
 
 
-Spectrum CreateRadianceProbes::Transmittance(const Scene *scene,
+Spectrum CreateRadianceProbes::Transmittance(const Scene &scene,
         const RayDifferential &ray, const Sample *sample, RNG &rng,
         MemoryArena &arena) const {
     return volumeIntegrator->Transmittance(scene, this, ray, sample, rng, arena);
 }
 
 
-void CreateRadianceProbes::Render(const Scene *scene) {
+void CreateRadianceProbes::Render(const Scene &scene) {
     // Compute scene bounds and initialize probe integrators
     if (bbox.pMin.x > bbox.pMax.x)
-        bbox = scene->WorldBound();
+        bbox = scene.WorldBound();
     surfaceIntegrator->Preprocess(scene, camera, this);
     volumeIntegrator->Preprocess(scene, camera, this);
     Sample *origSample = new Sample(NULL, surfaceIntegrator, volumeIntegrator,
@@ -151,7 +151,7 @@ void CreateRadianceProbes::Render(const Scene *scene) {
     // Create scene bounding sphere to catch rays that leave the scene
     Point sceneCenter;
     float sceneRadius;
-    scene->WorldBound().BoundingSphere(&sceneCenter, &sceneRadius);
+    scene.WorldBound().BoundingSphere(&sceneCenter, &sceneRadius);
     Transform ObjectToWorld(Translate(sceneCenter - Point(0,0,0)));
     Transform WorldToObject(Inverse(ObjectToWorld));
     Reference<Shape> sph = new Sphere(&ObjectToWorld, &WorldToObject,
@@ -174,7 +174,7 @@ void CreateRadianceProbes::Render(const Scene *scene) {
             Ray ray(pray, dir, rayEpsilon, INFINITY, time);
         
             Intersection isect;
-            if (!scene->Intersect(ray, &isect) &&
+            if (!scene.Intersect(ray, &isect) &&
                 !sphere.Intersect(ray, &isect))
                 break;
         
@@ -241,19 +241,22 @@ void CreateRadianceProbes::Render(const Scene *scene) {
 CreateRadProbeTask::CreateRadProbeTask(int pn, int d[3], float t,
         const BBox &b, int lm, bool id,
         bool ii, int nindir, ProgressReporter &p, Sample *samp,
-        const vector<Point> &sp, const Scene *sc, const Renderer *ren, Spectrum *c)
-        : bbox(b), prog(p), surfacePoints(sp) {
-    pointNum = pn;
-    lmax = lm;
-    nIndirSamples = nindir;
-    time = t;
+        const vector<Point> &sp, const Scene &sc, const Renderer *ren, Spectrum *c)
+  : pointNum(pn)
+  , bbox(b)
+  , lmax(lm)
+  , nIndirSamples(nindir)
+  , time(t)
+  , prog(p)
+  , includeDirectInProbes(id)
+  , includeIndirectInProbes(ii)
+  , origSample(samp)
+  , renderer(ren)
+  , scene(sc)
+  , surfacePoints(sp)
+  , c_in(c)
+{
     for (int i = 0; i < 3; ++i) nProbes[i] = d[i];
-    origSample = samp;
-    c_in = c;
-    includeDirectInProbes = id;
-    includeIndirectInProbes = ii;
-    scene = sc;
-    renderer = ren;
 }
 
 
@@ -286,13 +289,13 @@ void CreateRadProbeTask::Run() {
         Point p = b.Lerp(dx, dy, dz);
 
         // Skip point _p_ if not indirectly visible from camera
-        if (scene->IntersectP(Ray(surfacePoints[lastVisibleOffset],
+        if (scene.IntersectP(Ray(surfacePoints[lastVisibleOffset],
                                   p - surfacePoints[lastVisibleOffset],
                                   1e-4f, 1.f, time))) {
             uint32_t j;
             // See if point is visible to any element of _surfacePoints_
             for (j = 0; j < surfacePoints.size(); ++j)
-                if (!scene->IntersectP(Ray(surfacePoints[j], p - surfacePoints[j],
+                if (!scene.IntersectP(Ray(surfacePoints[j], p - surfacePoints[j],
                                            1e-4f, 1.f, time))) {
                     lastVisibleOffset = j;
                     break;

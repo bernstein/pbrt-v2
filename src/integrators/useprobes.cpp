@@ -96,13 +96,13 @@ UseRadianceProbes::~UseRadianceProbes() {
 }
 
 
-void UseRadianceProbes::RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene) {
+void UseRadianceProbes::RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene) {
     // Allocate and request samples for sampling all lights
-    uint32_t nLights = scene->lights.size();
+    uint32_t nLights = scene.lights.size();
     lightSampleOffsets = new LightSampleOffsets[nLights];
     bsdfSampleOffsets = new BSDFSampleOffsets[nLights];
     for (uint32_t i = 0; i < nLights; ++i) {
-        const Light *light = scene->lights[i];
+        const Light *light = scene.lights[i];
         int nSamples = light->nSamples;
         if (sampler) nSamples = sampler->RoundSize(nSamples);
         lightSampleOffsets[i] = LightSampleOffsets(nSamples, sample);
@@ -111,7 +111,7 @@ void UseRadianceProbes::RequestSamples(Sampler *sampler, Sample *sample, const S
 }
 
 
-Spectrum UseRadianceProbes::Li(const Scene *scene, const Renderer *renderer,
+Spectrum UseRadianceProbes::Li(const Scene &scene, const Renderer *renderer,
             const RayDifferential &ray, const Intersection &isect,
             const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.);

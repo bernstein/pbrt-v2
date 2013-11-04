@@ -59,7 +59,7 @@ public:
         ProgressReporter &prog, bool &at, int &ndp,
         vector<Photon> &direct, vector<Photon> &indir, vector<Photon> &caustic,
         vector<RadiancePhoton> &rps, vector<Spectrum> &rpR, vector<Spectrum> &rpT,
-        uint32_t &ns, Distribution1D *distrib, const Scene *sc,
+        uint32_t &ns, Distribution1D *distrib, const Scene &sc,
         const Renderer *sr)
     : taskNum(tn), time(ti), mutex(m), integrator(in), progress(prog),
       abortTasks(at), nDirectPaths(ndp),
@@ -80,7 +80,7 @@ public:
     vector<Spectrum> &rpReflectances, &rpTransmittances;
     uint32_t &nshot;
     const Distribution1D *lightDistribution;
-    const Scene *scene;
+    const Scene &scene;
     const Renderer *renderer;
 };
 
@@ -313,13 +313,13 @@ PhotonIntegrator::~PhotonIntegrator() {
 
 
 void PhotonIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
-        const Scene *scene) {
+        const Scene &scene) {
     // Allocate and request samples for sampling all lights
-    uint32_t nLights = scene->lights.size();
+    uint32_t nLights = scene.lights.size();
     lightSampleOffsets = new LightSampleOffsets[nLights];
     bsdfSampleOffsets = new BSDFSampleOffsets[nLights];
     for (uint32_t i = 0; i < nLights; ++i) {
-        const Light *light = scene->lights[i];
+        const Light *light = scene.lights[i];
         int nSamples = light->nSamples;
         if (sampler) nSamples = sampler->RoundSize(nSamples);
         lightSampleOffsets[i] = LightSampleOffsets(nSamples, sample);
@@ -336,9 +336,9 @@ void PhotonIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
 }
 
 
-void PhotonIntegrator::Preprocess(const Scene *scene,
+void PhotonIntegrator::Preprocess(const Scene &scene,
         const Camera *camera, const Renderer *renderer) {
-    if (scene->lights.size() == 0) return;
+    if (scene.lights.size() == 0) return;
     // Declare shared variables for photon shooting
     Mutex *mutex = Mutex::Create();
     int nDirectPaths = 0;
@@ -422,7 +422,7 @@ void PhotonShootingTask::Run() {
             // Choose light to shoot photon from
             float lightPdf;
             int lightNum = lightDistribution->SampleDiscrete(u[0], &lightPdf);
-            const Light *light = scene->lights[lightNum];
+            const Light *light = scene.lights[lightNum];
 
             // Generate _photonRay_ from light source and initialize _alpha_
             RayDifferential photonRay;
@@ -439,7 +439,7 @@ void PhotonShootingTask::Run() {
                 bool specularPath = true;
                 Intersection photonIsect;
                 int nIntersections = 0;
-                while (scene->Intersect(photonRay, &photonIsect)) {
+                while (scene.Intersect(photonRay, &photonIsect)) {
                     ++nIntersections;
                     // Handle photon/surface intersection
                     alpha *= renderer->Transmittance(scene, photonRay, NULL, rng, arena);
@@ -621,7 +621,7 @@ void ComputeRadianceTask::Run() {
 }
 
 
-Spectrum PhotonIntegrator::Li(const Scene *scene, const Renderer *renderer,
+Spectrum PhotonIntegrator::Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.);
@@ -680,7 +680,7 @@ Spectrum PhotonIntegrator::Li(const Scene *scene, const Renderer *renderer,
                 // Trace BSDF final gather ray and accumulate radiance
                 RayDifferential bounceRay(p, wi, ray, isect.rayEpsilon);
                 Intersection gatherIsect;
-                if (scene->Intersect(bounceRay, &gatherIsect)) {
+                if (scene.Intersect(bounceRay, &gatherIsect)) {
                     // Compute exitant radiance _Lindir_ using radiance photons
                     Spectrum Lindir = 0.f;
                     Normal nGather = gatherIsect.dg.nn;
@@ -727,7 +727,7 @@ Spectrum PhotonIntegrator::Li(const Scene *scene, const Renderer *renderer,
                 RayDifferential bounceRay(p, wi, ray, isect.rayEpsilon);
                 Intersection gatherIsect;
                 PBRT_PHOTON_MAP_STARTED_GATHER_RAY(&bounceRay);
-                if (scene->Intersect(bounceRay, &gatherIsect)) {
+                if (scene.Intersect(bounceRay, &gatherIsect)) {
                     // Compute exitant radiance _Lindir_ using radiance photons
                     Spectrum Lindir = 0.f;
                     Normal nGather = gatherIsect.dg.nn;

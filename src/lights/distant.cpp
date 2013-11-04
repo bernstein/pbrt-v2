@@ -55,10 +55,10 @@ Spectrum DistantLight::Sample_L(const Point &p, float pEpsilon,
 }
 
 
-Spectrum DistantLight::Power(const Scene *scene) const {
+Spectrum DistantLight::Power(const Scene &scene) const {
     Point worldCenter;
     float worldRadius;
-    scene->WorldBound().BoundingSphere(&worldCenter, &worldRadius);
+    scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
     return L * M_PI * worldRadius * worldRadius;
 }
 
@@ -79,13 +79,13 @@ float DistantLight::Pdf(const Point &, const Vector &) const {
 }
 
 
-Spectrum DistantLight::Sample_L(const Scene *scene,
+Spectrum DistantLight::Sample_L(const Scene &scene,
         const LightSample &ls, float u1, float u2, float time,
         Ray *ray, Normal *Ns, float *pdf) const {
     // Choose point on disk oriented toward infinite light direction
     Point worldCenter;
     float worldRadius;
-    scene->WorldBound().BoundingSphere(&worldCenter, &worldRadius);
+    scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
     Vector v1, v2;
     CoordinateSystem(lightDir, &v1, &v2);
     float d1, d2;

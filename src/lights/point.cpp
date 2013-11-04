@@ -57,7 +57,7 @@ Spectrum PointLight::Sample_L(const Point &p, float pEpsilon,
 }
 
 
-Spectrum PointLight::Power(const Scene *) const {
+Spectrum PointLight::Power(const Scene &) const {
     return 4.f * M_PI * Intensity;
 }
 
@@ -77,7 +77,7 @@ float PointLight::Pdf(const Point &, const Vector &) const {
 }
 
 
-Spectrum PointLight::Sample_L(const Scene *scene, const LightSample &ls,
+Spectrum PointLight::Sample_L(const Scene &scene, const LightSample &ls,
         float u1, float u2, float time, Ray *ray, Normal *Ns,
         float *pdf) const {
     *ray = Ray(lightPos, UniformSampleSphere(ls.uPos[0], ls.uPos[1]),
@@ -89,12 +89,12 @@ Spectrum PointLight::Sample_L(const Scene *scene, const LightSample &ls,
 
 
 void PointLight::SHProject(const Point &p, float pEpsilon, int lmax,
-        const Scene *scene, bool computeLightVisibility, float time,
+        const Scene &scene, bool computeLightVisibility, float time,
         RNG &rng, Spectrum *coeffs) const {
     for (int i = 0; i < SHTerms(lmax); ++i)
         coeffs[i] = 0.f;
     if (computeLightVisibility &&
-        scene->IntersectP(Ray(p, Normalize(lightPos - p), pEpsilon,
+        scene.IntersectP(Ray(p, Normalize(lightPos - p), pEpsilon,
                               Distance(lightPos, p), time)))
         return;
     // Project point light source to SH

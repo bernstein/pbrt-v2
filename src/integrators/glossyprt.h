@@ -51,9 +51,9 @@ public:
         c_in = B = NULL;
     }
     ~GlossyPRTIntegrator();
-    void Preprocess(const Scene *scene, const Camera *camera, const Renderer *renderer);
-    void RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene);
-    Spectrum Li(const Scene *scene, const Renderer *,
+    void Preprocess(const Scene &scene, const Camera *camera, const Renderer *renderer);
+    void RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene);
+    Spectrum Li(const Scene &scene, const Renderer *,
                 const RayDifferential &ray, const Intersection &isect,
                 const Sample *sample, RNG &rng, MemoryArena &arena) const;
 private:

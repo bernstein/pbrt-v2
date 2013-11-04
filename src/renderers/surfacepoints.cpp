@@ -52,7 +52,7 @@
 // SurfacePointsRenderer Local Declarations
 class SurfacePointTask : public Task {
 public:
-    SurfacePointTask(const Scene *sc, const Point &org, float ti, int tn,
+    SurfacePointTask(const Scene &sc, const Point &org, float ti, int tn,
         float msd, int mf, RWMutex &m, int &rf, int &mrf,
         int &tpt, int &trt, int &npa, GeometricPrimitive &sph,
         Octree<SurfacePoint> &oct, vector<SurfacePoint> &sps,
@@ -65,7 +65,7 @@ public:
     void Run();
 
     int taskNum;
-    const Scene *scene;
+    const Scene &scene;
     Point origin;
     float time;
     float minSampleDist;
@@ -98,29 +98,29 @@ struct PoissonCheck {
 
 
 // SurfacePointsRenderer Method Definitions
-Spectrum SurfacePointsRenderer::Li(const Scene *scene,
+Spectrum SurfacePointsRenderer::Li(const Scene &scene,
     const RayDifferential &ray, const Sample *sample, RNG &rng, MemoryArena &arena,
     Intersection *isect, Spectrum *T) const {
     return 0.f;
 }
 
 
-Spectrum SurfacePointsRenderer::Transmittance(const Scene *scene, const RayDifferential &ray,
+Spectrum SurfacePointsRenderer::Transmittance(const Scene &scene, const RayDifferential &ray,
     const Sample *sample, RNG &rng, MemoryArena &arena) const {
     return 0.f;
 }
 
 
-void SurfacePointsRenderer::Render(const Scene *scene) {
+void SurfacePointsRenderer::Render(const Scene &scene) {
     // Declare shared variables for Poisson point generation
-    BBox octBounds = scene->WorldBound();
+    BBox octBounds = scene.WorldBound();
     octBounds.Expand(.001f * powf(octBounds.Volume(), 1.f/3.f));
     Octree<SurfacePoint> pointOctree(octBounds);
 
     // Create scene bounding sphere to catch rays that leave the scene
     Point sceneCenter;
     float sceneRadius;
-    scene->WorldBound().BoundingSphere(&sceneCenter, &sceneRadius);
+    scene.WorldBound().BoundingSphere(&sceneCenter, &sceneRadius);
     Transform ObjectToWorld(Translate(sceneCenter - Point(0,0,0)));
     Transform WorldToObject(Inverse(ObjectToWorld));
     Reference<Shape> sph = new Sphere(&ObjectToWorld, &WorldToObject,
@@ -185,7 +185,7 @@ void SurfacePointTask::Run() {
                 ++raysTraced;
                 Intersection isect;
                 bool hitOnSphere = false;
-                if (!scene->Intersect(ray, &isect)) {
+                if (!scene.Intersect(ray, &isect)) {
                     if (!sphere.Intersect(ray, &isect))
                         break;
                     hitOnSphere = true;
@@ -272,7 +272,7 @@ void SurfacePointTask::Run() {
 
 
 void FindPoissonPointDistribution(const Point &pCamera, float time,
-        float minDist, const Scene *scene, vector<SurfacePoint> *points) {
+        float minDist, const Scene &scene, vector<SurfacePoint> *points) {
     SurfacePointsRenderer sp(minDist, pCamera, time, "");
     sp.Render(scene);
     points->swap(sp.points);

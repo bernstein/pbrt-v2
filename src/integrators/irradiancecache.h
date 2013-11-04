@@ -63,11 +63,11 @@ public:
         bsdfSampleOffsets = NULL;
     }
     ~IrradianceCacheIntegrator();
-    Spectrum Li(const Scene *scene, const Renderer *renderer,
+    Spectrum Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
-    void RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene);
-    void Preprocess(const Scene *, const Camera *, const Renderer *);
+    void RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene);
+    void Preprocess(const Scene &, const Camera *, const Renderer *);
 private:
     // IrradianceCacheIntegrator Private Data
     float minSamplePixelSpacing, maxSamplePixelSpacing;
@@ -83,10 +83,10 @@ private:
     // IrradianceCacheIntegrator Private Methods
     Spectrum indirectLo(const Point &p, const Normal &ng, float pixelSpacing,
         const Vector &wo, float rayEpsilon,BSDF *bsdf, BxDFType flags, RNG &rng,
-        const Scene *scene, const Renderer *renderer, MemoryArena &arena) const;
-    bool interpolateE(const Scene *scene,
+        const Scene &scene, const Renderer *renderer, MemoryArena &arena) const;
+    bool interpolateE(const Scene &scene,
             const Point &p, const Normal &n, Spectrum *E, Vector *wi) const;
-    Spectrum pathL(Ray &r, const Scene *scene, const Renderer *renderer,
+    Spectrum pathL(Ray &r, const Scene &scene, const Renderer *renderer,
         RNG &rng, MemoryArena &arena) const;
 };
 

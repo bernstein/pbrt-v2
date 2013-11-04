@@ -47,8 +47,8 @@ public:
     // UseRadianceProbes Public Methods
     UseRadianceProbes(const string &filename);
     ~UseRadianceProbes();
-    void RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene);
-    Spectrum Li(const Scene *scene, const Renderer *,
+    void RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene);
+    Spectrum Li(const Scene &scene, const Renderer *,
                 const RayDifferential &ray, const Intersection &isect,
                 const Sample *sample, RNG &rng, MemoryArena &arena) const;
 private:

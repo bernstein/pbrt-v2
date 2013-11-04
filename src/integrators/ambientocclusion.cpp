@@ -39,7 +39,7 @@
 #include "intersection.h"
 
 // AmbientOcclusionIntegrator Method Definitions
-Spectrum AmbientOcclusionIntegrator::Li(const Scene *scene, const Renderer *renderer,
+Spectrum AmbientOcclusionIntegrator::Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
 
@@ -55,7 +55,7 @@ Spectrum AmbientOcclusionIntegrator::Li(const Scene *scene, const Renderer *rend
         Vector w = UniformSampleSphere(u[0], u[1]);
         if (Dot(w, n) < 0.) w = -w;
         Ray r(p, w, .01f, maxDist);
-        if (!scene->IntersectP(r)) ++nClear;
+        if (!scene.IntersectP(r)) ++nClear;
     }
     return Spectrum(float(nClear) / float(nSamples));
 }

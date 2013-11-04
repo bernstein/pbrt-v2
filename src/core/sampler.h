@@ -76,7 +76,7 @@ struct CameraSample {
 struct Sample : public CameraSample {
     // Sample Public Methods
     Sample(Sampler *sampler, SurfaceIntegrator *surf, VolumeIntegrator *vol,
-        const Scene *scene);
+        const Scene &scene);
     uint32_t Add1D(uint32_t num) {
         n1D.push_back(num);
         return n1D.size()-1;

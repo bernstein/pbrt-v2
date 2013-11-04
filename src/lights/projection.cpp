@@ -102,7 +102,7 @@ Spectrum ProjectionLight::Projection(const Vector &w) const {
 }
 
 
-Spectrum ProjectionLight::Power(const Scene *) const {
+Spectrum ProjectionLight::Power(const Scene &) const {
     return (projectionMap ? Spectrum(projectionMap->Lookup(.5f, .5f, .5f),
                                      SPECTRUM_ILLUMINANT) : Spectrum(1.f)) *
         Intensity * 2.f * M_PI * (1.f - cosTotalWidth);
@@ -119,7 +119,7 @@ ProjectionLight *CreateProjectionLight(const Transform &light2world,
 }
 
 
-Spectrum ProjectionLight::Sample_L(const Scene *scene, const LightSample &ls,
+Spectrum ProjectionLight::Sample_L(const Scene &scene, const LightSample &ls,
         float u1, float u2, float time, Ray *ray, Normal *Ns, float *pdf) const {
     Vector v = UniformSampleCone(ls.uPos[0], ls.uPos[1], cosTotalWidth);
     *ray = Ray(lightPos, LightToWorld(v), 0.f, INFINITY, time);

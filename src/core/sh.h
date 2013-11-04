@@ -102,11 +102,11 @@ void SHProjectCube(Func func, const Point &p, int res, int lmax,
 
 
 void SHProjectIncidentDirectRadiance(const Point &p, float pEpsilon, float time,
-    MemoryArena &arena, const Scene *scene, bool computeLightVisibility,
+    MemoryArena &arena, const Scene &scene, bool computeLightVisibility,
     int lmax, RNG &rng, Spectrum *c_d);
 void SHProjectIncidentIndirectRadiance(const Point &p, float pEpsilon,
     float time, const Renderer *renderer, Sample *origSample,
-    const Scene *scene, int lmax, RNG &rng, int nSamples, Spectrum *c_i);
+    const Scene &scene, int lmax, RNG &rng, int nSamples, Spectrum *c_i);
 void SHReduceRinging(Spectrum *c, int lmax, float lambda = .005f);
 void SHRotate(const Spectrum *c_in, Spectrum *c_out, const Matrix4x4 &m,
               int lmax, MemoryArena &arena);
@@ -117,9 +117,9 @@ void SHRotateXPlus(const Spectrum *c_in, Spectrum *c_out, int lmax);
 void SHConvolveCosTheta(int lmax, const Spectrum *c_in, Spectrum *c_out);
 void SHConvolvePhong(int lmax, float n, const Spectrum *c_in, Spectrum *c_out);
 void SHComputeDiffuseTransfer(const Point &p, const Normal &n, float rayEpsilon,
-    const Scene *scene, RNG &rng, int nSamples, int lmax, Spectrum *c_transfer);
+    const Scene &scene, RNG &rng, int nSamples, int lmax, Spectrum *c_transfer);
 void SHComputeTransferMatrix(const Point &p, float rayEpsilon,
-    const Scene *scene, RNG &rng, int nSamples, int lmax, Spectrum *T);
+    const Scene &scene, RNG &rng, int nSamples, int lmax, Spectrum *T);
 void SHComputeBSDFMatrix(const Spectrum &Kd, const Spectrum &Ks,
     float roughness, RNG &rng, int nSamples, int lmax, Spectrum *B);
 void SHMatrixVectorMultiply(const Spectrum *M, const Spectrum *v,

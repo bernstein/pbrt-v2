@@ -39,16 +39,16 @@
 
 // SingleScatteringIntegrator Method Definitions
 void SingleScatteringIntegrator::RequestSamples(Sampler *sampler, Sample *sample,
-        const Scene *scene) {
+        const Scene &scene) {
     tauSampleOffset = sample->Add1D(1);
     scatterSampleOffset = sample->Add1D(1);
 }
 
 
-Spectrum SingleScatteringIntegrator::Transmittance(const Scene *scene,
+Spectrum SingleScatteringIntegrator::Transmittance(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
-    if (!scene->volumeRegion) return Spectrum(1.f);
+    if (!scene.volumeRegion) return Spectrum(1.f);
     float step, offset;
     if (sample) {
         step = stepSize;
@@ -58,15 +58,15 @@ Spectrum SingleScatteringIntegrator::Transmittance(const Scene *scene,
         step = 4.f * stepSize;
         offset = rng.RandomFloat();
     }
-    Spectrum tau = scene->volumeRegion->tau(ray, step, offset);
+    Spectrum tau = scene.volumeRegion->tau(ray, step, offset);
     return Exp(-tau);
 }
 
 
-Spectrum SingleScatteringIntegrator::Li(const Scene *scene, const Renderer *renderer,
+Spectrum SingleScatteringIntegrator::Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Sample *sample, RNG &rng,
         Spectrum *T, MemoryArena &arena) const {
-    VolumeRegion *vr = scene->volumeRegion;
+    VolumeRegion *vr = scene.volumeRegion;
     float t0, t1;
     if (!vr || !vr->IntersectP(ray, &t0, &t1) || (t1-t0) == 0.f) {
         *T = 1.f;
@@ -113,11 +113,11 @@ Spectrum SingleScatteringIntegrator::Li(const Scene *scene, const Renderer *rend
         // Compute single-scattering source term at _p_
         Lv += Tr * vr->Lve(p, w, ray.time);
         Spectrum ss = vr->sigma_s(p, w, ray.time);
-        if (!ss.IsBlack() && scene->lights.size() > 0) {
-            int nLights = scene->lights.size();
+        if (!ss.IsBlack() && scene.lights.size() > 0) {
+            int nLights = scene.lights.size();
             int ln = min(Floor2Int(lightNum[sampOffset] * nLights),
                          nLights-1);
-            Light *light = scene->lights[ln];
+            Light *light = scene.lights[ln];
             // Add contribution of _light_ due to scattering at _p_
             float pdf;
             VisibilityTester vis;

@@ -51,15 +51,15 @@ public:
     InfiniteAreaLight(const Transform &light2world, const Spectrum &power, int ns,
         const string &texmap);
     ~InfiniteAreaLight();
-    Spectrum Power(const Scene *) const;
+    Spectrum Power(const Scene &) const;
     bool IsDeltaLight() const { return false; }
     Spectrum Le(const RayDifferential &r) const;
     Spectrum Sample_L(const Point &p, float pEpsilon, const LightSample &ls,
         float time, Vector *wi, float *pdf, VisibilityTester *visibility) const;
-    Spectrum Sample_L(const Scene *scene, const LightSample &ls, float u1, float u2,
+    Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
         float time, Ray *ray, Normal *Ns, float *pdf) const;
     float Pdf(const Point &, const Vector &) const;
-    void SHProject(const Point &p, float pEpsilon, int lmax, const Scene *scene,
+    void SHProject(const Point &p, float pEpsilon, int lmax, const Scene &scene,
         bool computeLightVis, float time, RNG &rng, Spectrum *coeffs) const;
 private:
     // InfiniteAreaLight Private Data

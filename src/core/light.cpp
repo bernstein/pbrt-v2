@@ -43,12 +43,12 @@ Light::~Light() {
 }
 
 
-bool VisibilityTester::Unoccluded(const Scene *scene) const {
-    return !scene->IntersectP(r);
+bool VisibilityTester::Unoccluded(const Scene &scene) const {
+    return !scene.IntersectP(r);
 }
 
 
-Spectrum VisibilityTester::Transmittance(const Scene *scene,
+Spectrum VisibilityTester::Transmittance(const Scene &scene,
         const Renderer *renderer, const Sample *sample,
         RNG &rng, MemoryArena &arena) const {
     return renderer->Transmittance(scene, RayDifferential(r), sample,
@@ -82,7 +82,7 @@ LightSample::LightSample(const Sample *sample,
 
 
 void Light::SHProject(const Point &p, float pEpsilon, int lmax,
-        const Scene *scene, bool computeLightVisibility, float time,
+        const Scene &scene, bool computeLightVisibility, float time,
         RNG &rng, Spectrum *coeffs) const {
     for (int i = 0; i < SHTerms(lmax); ++i)
         coeffs[i] = 0.f;

@@ -41,17 +41,17 @@
 // InfiniteAreaLight Utility Classes
 struct InfiniteAreaCube {
     // InfiniteAreaCube Public Methods
-    InfiniteAreaCube(const InfiniteAreaLight *l, const Scene *s,
+    InfiniteAreaCube(const InfiniteAreaLight *l, const Scene &s,
                      float t, bool cv, float pe)
         : light(l), scene(s), time(t), pEpsilon(pe), computeVis(cv) { }
     Spectrum operator()(int, int, const Point &p, const Vector &w) {
         Ray ray(p, w, pEpsilon, INFINITY, time);
-        if (!computeVis || !scene->IntersectP(ray))
+        if (!computeVis || !scene.IntersectP(ray))
             return light->Le(RayDifferential(ray));
         return 0.f;
     }
     const InfiniteAreaLight *light;
-    const Scene *scene;
+    const Scene &scene;
     float time, pEpsilon;
     bool computeVis;
 };
@@ -105,10 +105,10 @@ InfiniteAreaLight::InfiniteAreaLight(const Transform &light2world,
 }
 
 
-Spectrum InfiniteAreaLight::Power(const Scene *scene) const {
+Spectrum InfiniteAreaLight::Power(const Scene &scene) const {
     Point worldCenter;
     float worldRadius;
-    scene->WorldBound().BoundingSphere(&worldCenter, &worldRadius);
+    scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
     return M_PI * worldRadius * worldRadius *
         Spectrum(radianceMap->Lookup(.5f, .5f, .5f), SPECTRUM_ILLUMINANT);
 }
@@ -123,7 +123,7 @@ Spectrum InfiniteAreaLight::Le(const RayDifferential &r) const {
 
 
 void InfiniteAreaLight::SHProject(const Point &p, float pEpsilon,
-        int lmax, const Scene *scene, bool computeLightVis,
+        int lmax, const Scene &scene, bool computeLightVis,
         float time, RNG &rng, Spectrum *coeffs) const {
     // Project _InfiniteAreaLight_ to SH using Monte Carlo if visibility needed
     if (computeLightVis) {
@@ -234,7 +234,7 @@ float InfiniteAreaLight::Pdf(const Point &, const Vector &w) const {
 }
 
 
-Spectrum InfiniteAreaLight::Sample_L(const Scene *scene,
+Spectrum InfiniteAreaLight::Sample_L(const Scene &scene,
         const LightSample &ls, float u1, float u2, float time,
         Ray *ray, Normal *Ns, float *pdf) const {
     PBRT_INFINITE_LIGHT_STARTED_SAMPLE();
@@ -255,7 +255,7 @@ Spectrum InfiniteAreaLight::Sample_L(const Scene *scene,
     // Compute origin for infinite light sample ray
     Point worldCenter;
     float worldRadius;
-    scene->WorldBound().BoundingSphere(&worldCenter, &worldRadius);
+    scene.WorldBound().BoundingSphere(&worldCenter, &worldRadius);
     Vector v1, v2;
     CoordinateSystem(-d, &v1, &v2);
     float d1, d2;

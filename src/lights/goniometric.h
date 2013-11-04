@@ -62,8 +62,8 @@ public:
         return (mipmap == NULL) ? 1.f :
                Spectrum(mipmap->Lookup(s, t, SPECTRUM_ILLUMINANT));
     }
-    Spectrum Power(const Scene *) const;
-    Spectrum Sample_L(const Scene *scene, const LightSample &ls, float u1, float u2,
+    Spectrum Power(const Scene &) const;
+    Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
         float time, Ray *ray, Normal *Ns, float *pdf) const;
     float Pdf(const Point &, const Vector &) const;
 private:

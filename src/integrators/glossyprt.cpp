@@ -47,10 +47,10 @@ GlossyPRTIntegrator::~GlossyPRTIntegrator() {
 }
 
 
-void GlossyPRTIntegrator::Preprocess(const Scene *scene,
+void GlossyPRTIntegrator::Preprocess(const Scene &scene,
         const Camera *camera, const Renderer *renderer) {
     // Project direct lighting into SH for _GlossyPRTIntegrator_
-    BBox bbox = scene->WorldBound();
+    BBox bbox = scene.WorldBound();
     Point p = .5f * bbox.pMin + .5f * bbox.pMax;
     RNG rng;
     MemoryArena arena;
@@ -64,11 +64,11 @@ void GlossyPRTIntegrator::Preprocess(const Scene *scene,
 }
 
 
-void GlossyPRTIntegrator::RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene) {
+void GlossyPRTIntegrator::RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene) {
 }
 
 
-Spectrum GlossyPRTIntegrator::Li(const Scene *scene, const Renderer *,
+Spectrum GlossyPRTIntegrator::Li(const Scene &scene, const Renderer *,
         const RayDifferential &ray, const Intersection &isect,
         const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L = 0.f;
@@ -107,7 +107,7 @@ Spectrum GlossyPRTIntegrator::Li(const Scene *scene, const Renderer *,
         Vector wi;
         float pdf;
         Spectrum f = bsdf->Sample_f(wo, &wi, BSDFSample(rng), &pdf);
-        if (pdf > 0.f && !f.IsBlack() && !scene->IntersectP(Ray(p, wi))) {
+        if (pdf > 0.f && !f.IsBlack() && !scene.IntersectP(Ray(p, wi))) {
             f *= fabsf(Dot(wi, n)) / (pdf * ns);
             SHEvaluate(bsdf->WorldToLocal(wi), lmax, Ylm);
     

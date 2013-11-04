@@ -37,7 +37,7 @@
 #include "paramset.h"
 
 // WhittedIntegrator Method Definitions
-Spectrum WhittedIntegrator::Li(const Scene *scene,
+Spectrum WhittedIntegrator::Li(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Intersection &isect, const Sample *sample, RNG &rng,
         MemoryArena &arena) const {
@@ -56,11 +56,11 @@ Spectrum WhittedIntegrator::Li(const Scene *scene,
     L += isect.Le(wo);
 
     // Add contribution of each light source
-    for (uint32_t i = 0; i < scene->lights.size(); ++i) {
+    for (uint32_t i = 0; i < scene.lights.size(); ++i) {
         Vector wi;
         float pdf;
         VisibilityTester visibility;
-        Spectrum Li = scene->lights[i]->Sample_L(p, isect.rayEpsilon,
+        Spectrum Li = scene.lights[i]->Sample_L(p, isect.rayEpsilon,
             LightSample(rng), ray.time, &wi, &pdf, &visibility);
         if (Li.IsBlack() || pdf == 0.f) continue;
         Spectrum f = bsdf->f(wo, wi);

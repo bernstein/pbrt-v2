@@ -52,14 +52,14 @@ DirectLightingIntegrator::~DirectLightingIntegrator() {
 
 
 void DirectLightingIntegrator::RequestSamples(Sampler *sampler,
-        Sample *sample, const Scene *scene) {
+        Sample *sample, const Scene &scene) {
     if (strategy == SAMPLE_ALL_UNIFORM) {
         // Allocate and request samples for sampling all lights
-        uint32_t nLights = scene->lights.size();
+        uint32_t nLights = scene.lights.size();
         lightSampleOffsets = new LightSampleOffsets[nLights];
         bsdfSampleOffsets = new BSDFSampleOffsets[nLights];
         for (uint32_t i = 0; i < nLights; ++i) {
-            const Light *light = scene->lights[i];
+            const Light *light = scene.lights[i];
             int nSamples = light->nSamples;
             if (sampler) nSamples = sampler->RoundSize(nSamples);
             lightSampleOffsets[i] = LightSampleOffsets(nSamples, sample);
@@ -78,7 +78,7 @@ void DirectLightingIntegrator::RequestSamples(Sampler *sampler,
 }
 
 
-Spectrum DirectLightingIntegrator::Li(const Scene *scene,
+Spectrum DirectLightingIntegrator::Li(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Intersection &isect, const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L(0.f);
@@ -91,7 +91,7 @@ Spectrum DirectLightingIntegrator::Li(const Scene *scene,
     L += isect.Le(wo);
 
     // Compute direct lighting for _DirectLightingIntegrator_ integrator
-    if (scene->lights.size() > 0) {
+    if (scene.lights.size() > 0) {
         // Apply direct lighting strategy
         switch (strategy) {
             case SAMPLE_ALL_UNIFORM:

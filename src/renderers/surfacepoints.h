@@ -59,11 +59,11 @@ public:
     SurfacePointsRenderer(float md, const Point &pc, float t,
                           const string &fn)
         : minDist(md), time(t), pCamera(pc), filename(fn) { }
-    void Render(const Scene *scene);
-    Spectrum Li(const Scene *scene, const RayDifferential &ray,
+    void Render(const Scene &scene);
+    Spectrum Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena,
         Intersection *isect, Spectrum *T) const;
-    Spectrum Transmittance(const Scene *scene, const RayDifferential &ray,
+    Spectrum Transmittance(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
 private:
     // SurfacePointsRenderer Private Data
@@ -71,13 +71,13 @@ private:
     Point pCamera;
     string filename;
     friend void FindPoissonPointDistribution(const Point &pCamera, float time,
-        float minDist, const Scene *scene, vector<SurfacePoint> *points);
+        float minDist, const Scene &scene, vector<SurfacePoint> *points);
     vector<SurfacePoint> points;
 };
 
 
 void FindPoissonPointDistribution(const Point &pCamera, float time, float minDist,
-    const Scene *scene, vector<SurfacePoint> *points);
+    const Scene &scene, vector<SurfacePoint> *points);
 SurfacePointsRenderer *CreateSurfacePointsRenderer(const ParamSet &params,
     const Point &pCamera, float time);
 

@@ -63,15 +63,15 @@ public:
     virtual Spectrum Sample_L(const Point &p, float pEpsilon,
         const LightSample &ls, float time, Vector *wi, float *pdf,
         VisibilityTester *vis) const = 0;
-    virtual Spectrum Power(const Scene *) const = 0;
+    virtual Spectrum Power(const Scene &) const = 0;
     virtual bool IsDeltaLight() const = 0;
     virtual Spectrum Le(const RayDifferential &r) const;
     virtual float Pdf(const Point &p, const Vector &wi) const = 0;
-    virtual Spectrum Sample_L(const Scene *scene, const LightSample &ls,
+    virtual Spectrum Sample_L(const Scene &scene, const LightSample &ls,
                               float u1, float u2, float time, Ray *ray,
                               Normal *Ns, float *pdf) const = 0;
     virtual void SHProject(const Point &p, float pEpsilon, int lmax,
-        const Scene *scene, bool computeLightVisibility, float time,
+        const Scene &scene, bool computeLightVisibility, float time,
         RNG &rng, Spectrum *coeffs) const;
 
     // Light Public Data
@@ -94,8 +94,8 @@ struct VisibilityTester {
         r = Ray(p, w, eps, INFINITY, time);
         Assert(!r.HasNaNs());
     }
-    bool Unoccluded(const Scene *scene) const;
-    Spectrum Transmittance(const Scene *scene, const Renderer *renderer,
+    bool Unoccluded(const Scene &scene) const;
+    Spectrum Transmittance(const Scene &scene, const Renderer *renderer,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
     Ray r;
 };

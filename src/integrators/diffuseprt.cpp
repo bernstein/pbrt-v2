@@ -53,9 +53,9 @@ DiffusePRTIntegrator::~DiffusePRTIntegrator() {
 }
 
 
-void DiffusePRTIntegrator::Preprocess(const Scene *scene,
+void DiffusePRTIntegrator::Preprocess(const Scene &scene,
         const Camera *camera, const Renderer *renderer) {
-    BBox bbox = scene->WorldBound();
+    BBox bbox = scene.WorldBound();
     Point p = .5f * bbox.pMin + .5f * bbox.pMax;
     RNG rng;
     MemoryArena arena;
@@ -64,11 +64,11 @@ void DiffusePRTIntegrator::Preprocess(const Scene *scene,
 }
 
 
-void DiffusePRTIntegrator::RequestSamples(Sampler *sampler, Sample *sample, const Scene *scene) {
+void DiffusePRTIntegrator::RequestSamples(Sampler *sampler, Sample *sample, const Scene &scene) {
 }
 
 
-Spectrum DiffusePRTIntegrator::Li(const Scene *scene, const Renderer *,
+Spectrum DiffusePRTIntegrator::Li(const Scene &scene, const Renderer *,
             const RayDifferential &ray, const Intersection &isect,
             const Sample *sample, RNG &rng, MemoryArena &arena) const {
     Spectrum L = 0.f;

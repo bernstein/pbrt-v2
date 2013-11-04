@@ -127,10 +127,10 @@ bool GetVolumeScatteringProperties(const string &name, Spectrum *sigma_a,
 class VolumeIntegrator : public Integrator {
 public:
     // VolumeIntegrator Interface
-    virtual Spectrum Li(const Scene *scene, const Renderer *renderer,
+    virtual Spectrum Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Sample *sample, RNG &rng,
         Spectrum *transmittance, MemoryArena &arena) const = 0;
-    virtual Spectrum Transmittance(const Scene *scene,
+    virtual Spectrum Transmittance(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const = 0;
 };

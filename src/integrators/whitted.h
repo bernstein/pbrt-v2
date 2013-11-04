@@ -45,7 +45,7 @@
 class WhittedIntegrator : public SurfaceIntegrator {
 public:
     // WhittedIntegrator Public Methods
-    Spectrum Li(const Scene *scene, const Renderer *renderer,
+    Spectrum Li(const Scene &scene, const Renderer *renderer,
         const RayDifferential &ray, const Intersection &isect, const Sample *sample,
         RNG &rng, MemoryArena &arena) const;
     WhittedIntegrator(int md) {

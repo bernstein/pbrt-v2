@@ -48,11 +48,11 @@ public:
     SamplerRenderer(Sampler *s, Camera *c, SurfaceIntegrator *si,
                     VolumeIntegrator *vi, bool visIds);
     ~SamplerRenderer();
-    void Render(const Scene *scene);
-    Spectrum Li(const Scene *scene, const RayDifferential &ray,
+    void Render(const Scene &scene);
+    Spectrum Li(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena,
         Intersection *isect = NULL, Spectrum *T = NULL) const;
-    Spectrum Transmittance(const Scene *scene, const RayDifferential &ray,
+    Spectrum Transmittance(const Scene &scene, const RayDifferential &ray,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
 private:
     // SamplerRenderer Private Data
@@ -69,18 +69,19 @@ private:
 class SamplerRendererTask : public Task {
 public:
     // SamplerRendererTask Public Methods
-    SamplerRendererTask(const Scene *sc, Renderer *ren, Camera *c,
+    SamplerRendererTask(const Scene &sc, Renderer *ren, Camera *c,
                         ProgressReporter &pr, Sampler *ms, Sample *sam, 
                         bool visIds, int tn, int tc)
       : reporter(pr)
+      , scene(sc)
     {
-        scene = sc; renderer = ren; camera = c; mainSampler = ms;
+         renderer = ren; camera = c; mainSampler = ms;
         origSample = sam; visualizeObjectIds = visIds; taskNum = tn; taskCount = tc;
     }
     void Run();
 private:
     // SamplerRendererTask Private Data
-    const Scene *scene;
+    const Scene &scene;
     const Renderer *renderer;
     Camera *camera;
     Sampler *mainSampler;
