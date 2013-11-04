@@ -29,6 +29,7 @@
 
  */
 
+#include <tuple>
 
 // cameras/orthographic.cpp*
 #include "stdafx.h"
@@ -59,7 +60,7 @@ float OrthoCamera::GenerateRay(const CameraSample &sample, Ray *ray) const {
     if (lensRadius > 0.) {
         // Sample point on lens
         float lensU, lensV;
-        ConcentricSampleDisk(sample.lensU, sample.lensV, &lensU, &lensV);
+        std::tie(lensU,lensV) = ConcentricSampleDisk(sample.lensU, sample.lensV);
         lensU *= lensRadius;
         lensV *= lensRadius;
 
@@ -91,7 +92,7 @@ float OrthoCamera::GenerateRayDifferential(const CameraSample &sample,
     if (lensRadius > 0.) {
         // Sample point on lens
         float lensU, lensV;
-        ConcentricSampleDisk(sample.lensU, sample.lensV, &lensU, &lensV);
+        std::tie(lensU,lensV) = ConcentricSampleDisk(sample.lensU, sample.lensV);
         lensU *= lensRadius;
         lensV *= lensRadius;
 

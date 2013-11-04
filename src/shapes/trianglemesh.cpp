@@ -29,6 +29,7 @@
 
  */
 
+#include <tuple>
 
 // shapes/trianglemesh.cpp*
 #include "stdafx.h"
@@ -443,7 +444,7 @@ TriangleMesh *CreateTriangleMeshShape(const Transform *o2w, const Transform *w2o
 
 Point Triangle::Sample(float u1, float u2, Normal *Ns) const {
     float b1, b2;
-    UniformSampleTriangle(u1, u2, &b1, &b2);
+    std::tie(b1,b2) = UniformSampleTriangle(u1, u2);
     // Get triangle vertices in _p1_, _p2_, and _p3_
     const Point &p1 = mesh->p[v[0]];
     const Point &p2 = mesh->p[v[1]];

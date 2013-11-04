@@ -29,6 +29,7 @@
 
  */
 
+#include <tuple>
 
 // lights/distant.cpp*
 #include "stdafx.h"
@@ -89,7 +90,7 @@ Spectrum DistantLight::Sample_L(const Scene &scene,
     Vector v1, v2;
     CoordinateSystem(lightDir, &v1, &v2);
     float d1, d2;
-    ConcentricSampleDisk(ls.uPos[0], ls.uPos[1], &d1, &d2);
+    std::tie(d1,d2) = ConcentricSampleDisk(ls.uPos[0], ls.uPos[1]);
     Point Pdisk = worldCenter + worldRadius * (d1 * v1 + d2 * v2);
 
     // Set ray origin and direction for infinite light ray

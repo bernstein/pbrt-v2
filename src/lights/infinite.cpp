@@ -29,6 +29,7 @@
 
  */
 
+#include <tuple>
 
 // lights/infinite.cpp*
 #include "stdafx.h"
@@ -259,7 +260,7 @@ Spectrum InfiniteAreaLight::Sample_L(const Scene &scene,
     Vector v1, v2;
     CoordinateSystem(-d, &v1, &v2);
     float d1, d2;
-    ConcentricSampleDisk(u1, u2, &d1, &d2);
+    std::tie(d1,d2) = ConcentricSampleDisk(u1, u2);
     Point Pdisk = worldCenter + worldRadius * (d1 * v1 + d2 * v2);
     *ray = Ray(Pdisk + worldRadius * -d, d, 0., INFINITY, time);
 

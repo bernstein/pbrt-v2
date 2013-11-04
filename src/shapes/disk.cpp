@@ -29,6 +29,7 @@
 
  */
 
+#include <tuple>
 
 // shapes/disk.cpp*
 #include "stdafx.h"
@@ -147,7 +148,7 @@ Disk *CreateDiskShape(const Transform *o2w, const Transform *w2o,
 
 Point Disk::Sample(float u1, float u2, Normal *Ns) const {
     Point p;
-    ConcentricSampleDisk(u1, u2, &p.x, &p.y);
+    std::tie(p.x,p.y) = ConcentricSampleDisk(u1, u2);
     p.x *= radius;
     p.y *= radius;
     p.z = height;

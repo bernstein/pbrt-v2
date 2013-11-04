@@ -29,6 +29,7 @@
 
  */
 
+#include <tuple>
 
 // cameras/perspective.cpp*
 #include "stdafx.h"
@@ -60,7 +61,7 @@ float PerspectiveCamera::GenerateRay(const CameraSample &sample,
     if (lensRadius > 0.) {
         // Sample point on lens
         float lensU, lensV;
-        ConcentricSampleDisk(sample.lensU, sample.lensV, &lensU, &lensV);
+        std::tie(lensU, lensV) = ConcentricSampleDisk(sample.lensU, sample.lensV);
         lensU *= lensRadius;
         lensV *= lensRadius;
 
@@ -90,7 +91,7 @@ float PerspectiveCamera::GenerateRayDifferential(const CameraSample &sample,
     if (lensRadius > 0.) {
         // Sample point on lens
         float lensU, lensV;
-        ConcentricSampleDisk(sample.lensU, sample.lensV, &lensU, &lensV);
+        std::tie(lensU, lensV) = ConcentricSampleDisk(sample.lensU, sample.lensV);
         lensU *= lensRadius;
         lensV *= lensRadius;
 

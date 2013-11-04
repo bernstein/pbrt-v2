@@ -251,19 +251,15 @@ void LDPixelSample(int xPos, int yPos, float shutterOpen,
     }
 }
 
-
-
 // Monte Carlo Function Definitions
-void RejectionSampleDisk(float *x, float *y, RNG &rng) {
+std::pair<float,float> RejectionSampleDisk(RNG &rng) {
     float sx, sy;
     do {
         sx = 1.f - 2.f * rng.RandomFloat();
         sy = 1.f - 2.f * rng.RandomFloat();
     } while (sx*sx + sy*sy > 1.f);
-    *x = sx;
-    *y = sy;
+    return std::make_pair(sx,sy);
 }
-
 
 Vector UniformSampleHemisphere(float u1, float u2) {
     float z = u1;
@@ -295,15 +291,14 @@ float UniformSpherePdf() {
 }
 
 
-void UniformSampleDisk(float u1, float u2, float *x, float *y) {
+std::pair<float,float> UniformSampleDisk(float u1, float u2) {
     float r = sqrtf(u1);
     float theta = 2.0f * M_PI * u2;
-    *x = r * cosf(theta);
-    *y = r * sinf(theta);
+    return std::make_pair(r * cosf(theta), r * sinf(theta));
 }
 
 
-void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy) {
+std::pair<float,float> ConcentricSampleDisk(float u1, float u2) {
     float r, theta;
     // Map uniform random numbers to $[-1,1]^2$
     float sx = 2 * u1 - 1;
@@ -313,9 +308,7 @@ void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy) {
 
     // Handle degeneracy at the origin
     if (sx == 0.0 && sy == 0.0) {
-        *dx = 0.0;
-        *dy = 0.0;
-        return;
+        return std::make_pair(0.0,0.0);
     }
     if (sx >= -sy) {
         if (sx > sy) {
@@ -343,17 +336,13 @@ void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy) {
         }
     }
     theta *= M_PI / 4.f;
-    *dx = r * cosf(theta);
-    *dy = r * sinf(theta);
+    return std::make_pair(r * cosf(theta), r * sinf(theta));
 }
 
-
-void UniformSampleTriangle(float u1, float u2, float *u, float *v) {
+std::pair<float,float> UniformSampleTriangle(float u1, float u2) {
     float su1 = sqrtf(u1);
-    *u = 1.f - su1;
-    *v = u2 * su1;
+    return std::make_pair(1.f - su1, u2 * su1);
 }
-
 
 Distribution2D::Distribution2D(const float *func, int nu, int nv) {
     pConditionalV.reserve(nv);

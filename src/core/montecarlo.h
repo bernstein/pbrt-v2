@@ -36,6 +36,10 @@
 #ifndef PBRT_CORE_MONTECARLO_H
 #define PBRT_CORE_MONTECARLO_H
 
+#include <memory>
+#include <utility>
+#include <tuple>
+
 // core/montecarlo.h*
 #include "pbrt.h"
 #include "geometry.h"
@@ -113,8 +117,7 @@ private:
     int count;
 };
 
-
-void RejectionSampleDisk(float *x, float *y, RNG &rng);
+std::pair<float,float> RejectionSampleDisk(RNG &rng);
 Vector UniformSampleHemisphere(float u1, float u2);
 float  UniformHemispherePdf();
 Vector UniformSampleSphere(float u1, float u2);
@@ -123,11 +126,12 @@ Vector UniformSampleCone(float u1, float u2, float thetamax);
 Vector UniformSampleCone(float u1, float u2, float thetamax,
     const Vector &x, const Vector &y, const Vector &z);
 float  UniformConePdf(float thetamax);
-void UniformSampleDisk(float u1, float u2, float *x, float *y);
-void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy);
+std::pair<float,float> UniformSampleDisk(float u1, float u2);
+std::pair<float,float> ConcentricSampleDisk(float u1, float u2);
+
 inline Vector CosineSampleHemisphere(float u1, float u2) {
     Vector ret;
-    ConcentricSampleDisk(u1, u2, &ret.x, &ret.y);
+    std::tie(ret.x, ret.y) = ConcentricSampleDisk(u1, u2);
     ret.z = sqrtf(max(0.f, 1.f - ret.x*ret.x - ret.y*ret.y));
     return ret;
 }
@@ -137,8 +141,8 @@ inline float CosineHemispherePdf(float costheta, float phi) {
     return costheta * INV_PI;
 }
 
+std::pair<float,float> UniformSampleTriangle(float ud1, float ud2);
 
-void UniformSampleTriangle(float ud1, float ud2, float *u, float *v);
 struct Distribution2D {
     // Distribution2D Public Methods
     Distribution2D(const float *data, int nu, int nv);
