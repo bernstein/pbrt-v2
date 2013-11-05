@@ -56,42 +56,55 @@ static const float OneMinusEpsilon=0x1.fffffep-1;
 
 // Monte Carlo Utility Declarations
 struct Distribution1D {
-    // Distribution1D Public Methods
-    Distribution1D(const float *f, int n) {
-        count = n;
-        func = new float[n];
-        memcpy(func, f, n*sizeof(float));
-        cdf = new float[n+1];
+    Distribution1D() : func() , m_cdf() , funcInt(0) , count(0) {}
+    Distribution1D(std::vector<float> const& f)
+      : Distribution1D(&f[0], f.size()) {}
+    Distribution1D(const float *f, int n)
+      : func(n)
+      , m_cdf(n+1, 0.0f)
+      , funcInt(0)
+      , count(n)
+    {
+        memcpy(&func[0], f, n*sizeof(float));
         // Compute integral of step function at $x_i$
-        cdf[0] = 0.;
-        for (int i = 1; i < count+1; ++i)
-            cdf[i] = cdf[i-1] + func[i-1] / n;
+        m_cdf[0] = 0.;
+        for (int i = 1; i < count+1; ++i) {
+            m_cdf[i] = m_cdf[i-1] + func[i-1] / n;
+        }
 
         // Transform step function integral into CDF
-        funcInt = cdf[count];
+        funcInt = m_cdf[count];
         if (funcInt == 0.f) {
-            for (int i = 1; i < n+1; ++i)
-                cdf[i] = float(i) / float(n);
-        }
-        else {
-            for (int i = 1; i < n+1; ++i)
-                cdf[i] /= funcInt;
+            for (int i = 1; i < n+1; ++i) {
+                m_cdf[i] = float(i) / float(n);
+            }
+        } else {
+            for (int i = 1; i < n+1; ++i) {
+                m_cdf[i] /= funcInt;
+            }
         }
     }
-    ~Distribution1D() {
-        delete[] func;
-        delete[] cdf;
+    int SampleDiscrete(float u, float *pdf) const {
+        // Find surrounding CDF segments and _offset_
+        auto it = std::upper_bound(m_cdf.begin(), m_cdf.begin(), u);
+        int offset = max(0, int(std::distance(m_cdf.begin(),it) - 1));
+
+        Assert(offset < count);
+        Assert(u >= m_cdf[offset] && u < m_cdf[offset+1]);
+        if (pdf) *pdf = func[offset] / (funcInt * count);
+        return offset;
     }
+private:
     float SampleContinuous(float u, float *pdf, int *off = NULL) const {
         // Find surrounding CDF segments and _offset_
-        float *ptr = std::upper_bound(cdf, cdf+count+1, u);
-        int offset = max(0, int(ptr-cdf-1));
+        auto it = std::upper_bound(m_cdf.begin(), m_cdf.begin(), u);
+        int offset = max(0, int(std::distance(m_cdf.begin(),it) - 1));
+
         if (off) *off = offset;
         Assert(offset < count);
-        Assert(u >= cdf[offset] && u < cdf[offset+1]);
 
         // Compute offset along CDF segment
-        float du = (u - cdf[offset]) / (cdf[offset+1] - cdf[offset]);
+        float du = (u - m_cdf[offset]) / (m_cdf[offset+1] - m_cdf[offset]);
         Assert(!isnan(du));
 
         // Compute PDF for sampled offset
@@ -100,19 +113,10 @@ struct Distribution1D {
         // Return $x\in{}[0,1)$ corresponding to sample
         return (offset + du) / count;
     }
-    int SampleDiscrete(float u, float *pdf) const {
-        // Find surrounding CDF segments and _offset_
-        float *ptr = std::upper_bound(cdf, cdf+count+1, u);
-        int offset = max(0, int(ptr-cdf-1));
-        Assert(offset < count);
-        Assert(u >= cdf[offset] && u < cdf[offset+1]);
-        if (pdf) *pdf = func[offset] / (funcInt * count);
-        return offset;
-    }
-private:
     friend struct Distribution2D;
     // Distribution1D Private Data
-    float *func, *cdf;
+    std::vector<float> func;
+    std::vector<float> m_cdf;
     float funcInt;
     int count;
 };
@@ -136,7 +140,6 @@ inline Vector CosineSampleHemisphere(float u1, float u2) {
     return ret;
 }
 
-
 inline float CosineHemispherePdf(float costheta, float phi) {
     return costheta * INV_PI;
 }
@@ -144,32 +147,29 @@ inline float CosineHemispherePdf(float costheta, float phi) {
 std::pair<float,float> UniformSampleTriangle(float ud1, float ud2);
 
 struct Distribution2D {
-    // Distribution2D Public Methods
     Distribution2D(const float *data, int nu, int nv);
-    ~Distribution2D();
     void SampleContinuous(float u0, float u1, float uv[2],
-                          float *pdf) const {
+                          float *pdf) const
+    {
         float pdfs[2];
         int v;
-        uv[1] = pMarginal->SampleContinuous(u1, &pdfs[1], &v);
-        uv[0] = pConditionalV[v]->SampleContinuous(u0, &pdfs[0]);
+        uv[1] = pMarginal.SampleContinuous(u1, &pdfs[1], &v);
+        uv[0] = pConditionalV[v].SampleContinuous(u0, &pdfs[0]);
         *pdf = pdfs[0] * pdfs[1];
     }
     float Pdf(float u, float v) const {
-        int iu = Clamp(Float2Int(u * pConditionalV[0]->count), 0,
-                       pConditionalV[0]->count-1);
-        int iv = Clamp(Float2Int(v * pMarginal->count), 0,
-                       pMarginal->count-1);
-        if (pConditionalV[iv]->funcInt * pMarginal->funcInt == 0.f) return 0.f;
-        return (pConditionalV[iv]->func[iu] * pMarginal->func[iv]) /
-               (pConditionalV[iv]->funcInt * pMarginal->funcInt);
+        int iu = Clamp(Float2Int(u * pConditionalV[0].count), 0,
+                       pConditionalV[0].count-1);
+        int iv = Clamp(Float2Int(v * pMarginal.count), 0,
+                       pMarginal.count-1);
+        if (pConditionalV[iv].funcInt * pMarginal.funcInt == 0.f) return 0.f;
+        return (pConditionalV[iv].func[iu] * pMarginal.func[iv]) /
+               (pConditionalV[iv].funcInt * pMarginal.funcInt);
     }
 private:
-    // Distribution2D Private Data
-    vector<Distribution1D *> pConditionalV;
-    Distribution1D *pMarginal;
+    std::vector<Distribution1D> pConditionalV;
+    Distribution1D pMarginal;
 };
-
 
 void StratifiedSample1D(float *samples, int nsamples, RNG &rng,
                         bool jitter = true);
@@ -183,7 +183,6 @@ void Shuffle(T *samp, uint32_t count, uint32_t dims, RNG &rng) {
             swap(samp[dims*i + j], samp[dims*other + j]);
     }
 }
-
 
 void LatinHypercube(float *samples, uint32_t nSamples, uint32_t nDim, RNG &rng);
 inline double RadicalInverse(int n, int base) {
@@ -199,13 +198,11 @@ inline double RadicalInverse(int n, int base) {
     return val;
 }
 
-
 inline void GeneratePermutation(uint32_t *buf, uint32_t b, RNG &rng) {
     for (uint32_t i = 0; i < b; ++i)
         buf[i] = i;
     Shuffle(buf, b, 1, rng);
 }
-
 
 inline double PermutedRadicalInverse(uint32_t n, uint32_t base,
                                      const uint32_t *p) {

@@ -29,6 +29,7 @@
 
  */
 
+#include <utility>
 
 // core/montecarlo.cpp*
 #include "stdafx.h"
@@ -290,13 +291,11 @@ float UniformSpherePdf() {
     return 1.f / (4.f * M_PI);
 }
 
-
 std::pair<float,float> UniformSampleDisk(float u1, float u2) {
     float r = sqrtf(u1);
     float theta = 2.0f * M_PI * u2;
     return std::make_pair(r * cosf(theta), r * sinf(theta));
 }
-
 
 std::pair<float,float> ConcentricSampleDisk(float u1, float u2) {
     float r, theta;
@@ -344,27 +343,20 @@ std::pair<float,float> UniformSampleTriangle(float u1, float u2) {
     return std::make_pair(1.f - su1, u2 * su1);
 }
 
-Distribution2D::Distribution2D(const float *func, int nu, int nv) {
-    pConditionalV.reserve(nv);
+Distribution2D::Distribution2D(const float *func, int nu, int nv)
+  : pConditionalV()
+  , pMarginal()
+{
     for (int v = 0; v < nv; ++v) {
         // Compute conditional sampling distribution for $\tilde{v}$
-        pConditionalV.push_back(new Distribution1D(&func[v*nu], nu));
+        pConditionalV.push_back(Distribution1D(&func[v*nu], nu));
     }
     // Compute marginal sampling distribution $p[\tilde{v}]$
     vector<float> marginalFunc;
-    marginalFunc.reserve(nv);
     for (int v = 0; v < nv; ++v)
-        marginalFunc.push_back(pConditionalV[v]->funcInt);
-    pMarginal = new Distribution1D(&marginalFunc[0], nv);
+        marginalFunc.push_back(pConditionalV[v].funcInt);
+    pMarginal = Distribution1D(marginalFunc);
 }
-
-
-Distribution2D::~Distribution2D() {
-    delete pMarginal;
-    for (uint32_t i = 0; i < pConditionalV.size(); ++i)
-        delete pConditionalV[i];
-}
-
 
 PermutedHalton::PermutedHalton(uint32_t d, RNG &rng) {
     dims = d;
@@ -385,11 +377,9 @@ PermutedHalton::PermutedHalton(uint32_t d, RNG &rng) {
     }
 }
 
-
 float UniformConePdf(float cosThetaMax) {
     return 1.f / (2.f * M_PI * (1.f - cosThetaMax));
 }
-
 
 Vector UniformSampleCone(float u1, float u2, float costhetamax) {
     float costheta = (1.f - u1) + u1 * costhetamax;
@@ -397,7 +387,6 @@ Vector UniformSampleCone(float u1, float u2, float costhetamax) {
     float phi = u2 * 2.f * M_PI;
     return Vector(cosf(phi) * sintheta, sinf(phi) * sintheta, costheta);
 }
-
 
 Vector UniformSampleCone(float u1, float u2, float costhetamax,
         const Vector &x, const Vector &y, const Vector &z) {
@@ -407,7 +396,6 @@ Vector UniformSampleCone(float u1, float u2, float costhetamax,
     return cosf(phi) * sintheta * x + sinf(phi) * sintheta * y +
         costheta * z;
 }
-
 
 Vector SampleHG(const Vector &w, float g, float u1, float u2) {
     float costheta;
@@ -425,9 +413,6 @@ Vector SampleHG(const Vector &w, float g, float u1, float u2) {
     return SphericalDirection(sintheta, costheta, phi, v1, v2, w);
 }
 
-
 float HGPdf(const Vector &w, const Vector &wp, float g) {
     return PhaseHG(w, wp, g);
 }
-
-
