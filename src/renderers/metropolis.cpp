@@ -470,10 +470,17 @@ Spectrum MetropolisRenderer::Lbidir(const Scene &scene,
 
 MetropolisRenderer::MetropolisRenderer(int perPixelSamples,
         int nboot, int dps, float lsp, bool dds, int mr, int md,
-        Camera *c, bool db) {
-    camera = c;
+        Camera *c, bool db)
+  : camera(c)
+  , bidirectional(db)
+  , nDirectPixelSamples(dps)
+  , nPixelSamples(perPixelSamples)
+  , maxDepth(md)
+  , nBootstrap(nboot)
+  , maxConsecutiveRejects(mr)
+  , nTasksFinished(0)
+{
 
-    nPixelSamples = perPixelSamples;
     float largeStepProbability = lsp;
     largeStepsPerPixel = max(1u, RoundUpPow2(largeStepProbability * nPixelSamples));
     if (largeStepsPerPixel >= nPixelSamples) largeStepsPerPixel /= 2;
@@ -485,14 +492,7 @@ MetropolisRenderer::MetropolisRenderer(int perPixelSamples,
                 nPixelSamples, origPixelSamples);
     }
 
-    nBootstrap = nboot;
-    nDirectPixelSamples = dps;
-
-    maxDepth = md;
-    maxConsecutiveRejects = mr;
-    nTasksFinished  = 0;
     directLighting = dds ? new DirectLightingIntegrator(SAMPLE_ALL_UNIFORM, maxDepth) : NULL;
-    bidirectional = db;
 }
 
 
