@@ -183,28 +183,29 @@ void SurfacePointTask::Run() {
             while (ray.depth < 30) {
                 // Find ray intersection with scene geometry or bounding sphere
                 ++raysTraced;
-                Intersection isect;
                 bool hitOnSphere = false;
-                if (!scene.Intersect(ray, &isect)) {
-                    if (!sphere.Intersect(ray, &isect))
+                auto optIsect = scene.Intersect(ray);
+                if (!optIsect) {
+                    optIsect = sphere.Intersect(ray);
+                    if (!optIsect)
                         break;
                     hitOnSphere = true;
                 }
-                DifferentialGeometry &hitGeometry = isect.dg;
+                DifferentialGeometry &hitGeometry = optIsect->dg;
                 hitGeometry.nn = Faceforward(hitGeometry.nn, -ray.d);
 
                 // Store candidate sample point at ray intersection if appropriate
                 if (!hitOnSphere && ray.depth >= 3 &&
-                    isect.GetBSSRDF(RayDifferential(ray), arena) != NULL) {
+                    optIsect->GetBSSRDF(RayDifferential(ray), arena) != NULL) {
                     float area = M_PI * (minSampleDist / 2.f) * (minSampleDist / 2.f);
                     candidates.push_back(SurfacePoint(hitGeometry.p, hitGeometry.nn,
-                                                      area, isect.rayEpsilon));
+                                                      area, optIsect->rayEpsilon));
                 }
 
                 // Generate random ray from intersection point
                 Vector dir = UniformSampleSphere(rng.RandomFloat(), rng.RandomFloat());
                 dir = Faceforward(dir, hitGeometry.nn);
-                ray = Ray(hitGeometry.p, dir, ray, isect.rayEpsilon);
+                ray = Ray(hitGeometry.p, dir, ray, optIsect->rayEpsilon);
             }
             arena.FreeAll();
         }

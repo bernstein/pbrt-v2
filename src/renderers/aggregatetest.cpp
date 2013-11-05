@@ -31,6 +31,7 @@
 
 
 // renderers/aggregatetest.cpp*
+#include <boost/optional.hpp>
 #include "stdafx.h"
 #include "renderers/aggregatetest.h"
 #include "progressreporter.h"
@@ -90,28 +91,35 @@ void AggregateTest::Render(const Scene &scene) {
         Ray rayAll = rayAccel;
 
         // Compute intersections using accelerator and exhaustive testing
-        Intersection isectAccel, isectAll;
-        bool hitAccel = scene.Intersect(rayAccel, &isectAccel);
+        //Intersection isectAll;
+        auto optIsectAccel = scene.Intersect(rayAccel);
+        boost::optional<Intersection> optIsectAll;
         bool hitAll = false;
         bool inconsistentBounds = false;
         for (uint32_t j = 0; j < primitives.size(); ++j) {
-            if (bboxes[j].IntersectP(rayAll))
-                hitAll |= primitives[j]->Intersect(rayAll, &isectAll);
-            else if (primitives[j]->Intersect(rayAll, &isectAll))
+            if (bboxes[j].IntersectP(rayAll)) {
+                optIsectAll = primitives[j]->Intersect(rayAll);
+                hitAll |= bool(optIsectAll);
+            }
+            else {
+              optIsectAll = primitives[j]->Intersect(rayAll);
+              if (optIsectAll) {
                 inconsistentBounds = true;
+              }
+            }
         }
 
         // Report any inconsistencies between intersections
         if (!inconsistentBounds &&
-            ((hitAccel != hitAll) || (rayAccel.maxt != rayAll.maxt)))
+            ((bool(optIsectAccel) != hitAll) || (rayAccel.maxt != rayAll.maxt)))
             Warning("Disagreement: t accel %.16g [%a] t exhaustive %.16g [%a]\n"
                     "Ray: org [%a, %a, %a], dir [%a, %a, %a], mint = %a",
                     rayAccel.maxt, rayAll.maxt, rayAccel.maxt, rayAll.maxt,
                     rayAll.o.x, rayAll.o.y, rayAll.o.z,
                     rayAll.d.x, rayAll.d.y, rayAll.d.z, rayAll.mint);
-        if (hitAll) {
+        if (optIsectAll) {
             lastHit = rayAll(rayAll.maxt);
-            lastEps = isectAll.rayEpsilon;
+            lastEps = optIsectAll->rayEpsilon;
         }
         prog.Update();
     }

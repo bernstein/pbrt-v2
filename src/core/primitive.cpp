@@ -29,6 +29,7 @@
 
  */
 
+#include <boost/optional.hpp>
 
 // core/primitive.cpp*
 #include "stdafx.h"
@@ -38,18 +39,10 @@
 
 // Primitive Method Definitions
 uint32_t Primitive::nextprimitiveId = 1;
-Primitive::~Primitive() { }
-
-bool Primitive::CanIntersect() const {
-    return true;
-}
-
-
 
 void Primitive::Refine(vector<Reference<Primitive> > &refined) const {
     Severe("Unimplemented Primitive::Refine() method called!");
 }
-
 
 void
 Primitive::FullyRefine(vector<Reference<Primitive> > &refined) const {
@@ -92,13 +85,13 @@ BSSRDF *Aggregate::GetBSSRDF(const DifferentialGeometry &,
 
 
 // TransformedPrimitive Method Definitions
-bool TransformedPrimitive::Intersect(const Ray &r,
-                                     Intersection *isect) const {
+boost::optional<Intersection> TransformedPrimitive::Intersect(const Ray &r) const {
     Transform w2p;
     WorldToPrimitive.Interpolate(r.time, &w2p);
     Ray ray = w2p(r);
-    if (!primitive->Intersect(ray, isect))
-        return false;
+    boost::optional<Intersection> isect = primitive->Intersect(ray);
+    if (!isect)
+        return isect;
     r.maxt = ray.maxt;
     isect->primitiveId = primitiveId;
     if (!w2p.IsIdentity()) {
@@ -115,15 +108,12 @@ bool TransformedPrimitive::Intersect(const Ray &r,
         isect->dg.dndu = PrimitiveToWorld(isect->dg.dndu);
         isect->dg.dndv = PrimitiveToWorld(isect->dg.dndv);
     }
-    return true;
+    return isect;
 }
-
 
 bool TransformedPrimitive::IntersectP(const Ray &r) const {
     return primitive->IntersectP(WorldToPrimitive(r));
 }
-
-
 
 // GeometricPrimitive Method Definitions
 BBox GeometricPrimitive::WorldBound() const {
@@ -160,19 +150,20 @@ GeometricPrimitive::GeometricPrimitive(const Reference<Shape> &s,
 }
 
 
-bool GeometricPrimitive::Intersect(const Ray &r,
-                                   Intersection *isect) const {
+boost::optional<Intersection> GeometricPrimitive::Intersect(const Ray &r) const {
     float thit, rayEpsilon;
-    if (!shape->Intersect(r, &thit, &rayEpsilon, &isect->dg))
-        return false;
-    isect->primitive = this;
-    isect->WorldToObject = *shape->WorldToObject;
-    isect->ObjectToWorld = *shape->ObjectToWorld;
-    isect->shapeId = shape->shapeId;
-    isect->primitiveId = primitiveId;
-    isect->rayEpsilon = rayEpsilon;
+    Intersection isect;
+    if (!shape->Intersect(r, &thit, &rayEpsilon, &isect.dg))
+        return boost::optional<Intersection>();
+
+    isect.primitive = this;
+    isect.WorldToObject = *shape->WorldToObject;
+    isect.ObjectToWorld = *shape->ObjectToWorld;
+    isect.shapeId = shape->shapeId;
+    isect.primitiveId = primitiveId;
+    isect.rayEpsilon = rayEpsilon;
     r.maxt = thit;
-    return true;
+    return boost::make_optional(isect);
 }
 
 

@@ -37,9 +37,11 @@
 #define PBRT_CORE_SCENE_H
 
 // core/scene.h*
+#include <boost/optional.hpp>
 #include "pbrt.h"
 #include "primitive.h"
 #include "integrator.h"
+#include "intersection.h"
 
 // Scene Declarations
 class Scene {
@@ -47,11 +49,11 @@ public:
     // Scene Public Methods
     Scene(Primitive *accel, const vector<Light *> &lts, VolumeRegion *vr);
     ~Scene();
-    bool Intersect(const Ray &ray, Intersection *isect) const {
+    boost::optional<Intersection> Intersect(const Ray &ray) const {
         PBRT_STARTED_RAY_INTERSECTION(const_cast<Ray *>(&ray));
-        bool hit = aggregate->Intersect(ray, isect);
+        boost::optional<Intersection> isect = aggregate->Intersect(ray);
         PBRT_FINISHED_RAY_INTERSECTION(const_cast<Ray *>(&ray), isect, int(hit));
-        return hit;
+        return isect;
     }
     bool IntersectP(const Ray &ray) const {
         PBRT_STARTED_RAY_INTERSECTIONP(const_cast<Ray *>(&ray));

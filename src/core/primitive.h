@@ -36,6 +36,7 @@
 #ifndef PBRT_CORE_PRIMITIVE_H
 #define PBRT_CORE_PRIMITIVE_H
 
+#include <boost/optional.hpp>
 // core/primitive.h*
 #include "pbrt.h"
 #include "shape.h"
@@ -46,10 +47,10 @@ class Primitive : public ReferenceCounted {
 public:
     // Primitive Interface
     Primitive() : primitiveId(nextprimitiveId++) { }
-    virtual ~Primitive();
+    virtual ~Primitive() {}
     virtual BBox WorldBound() const = 0;
-    virtual bool CanIntersect() const;
-    virtual bool Intersect(const Ray &r, Intersection *in) const = 0;
+    inline virtual bool CanIntersect() const { return true ;}
+    virtual boost::optional<Intersection> Intersect(const Ray &r) const = 0;
     virtual bool IntersectP(const Ray &r) const = 0;
     virtual void Refine(vector<Reference<Primitive> > &refined) const;
     void FullyRefine(vector<Reference<Primitive> > &refined) const;
@@ -66,32 +67,28 @@ protected:
     static uint32_t nextprimitiveId;
 };
 
-
-
 // GeometricPrimitive Declarations
 class GeometricPrimitive : public Primitive {
 public:
     // GeometricPrimitive Public Methods
-    bool CanIntersect() const;
-    void Refine(vector<Reference<Primitive> > &refined) const;
-    virtual BBox WorldBound() const;
-    virtual bool Intersect(const Ray &r, Intersection *isect) const;
-    virtual bool IntersectP(const Ray &r) const;
+    bool CanIntersect() const override;
+    void Refine(vector<Reference<Primitive> > &refined) const override;
+    virtual BBox WorldBound() const override;
+    boost::optional<Intersection> Intersect(const Ray &r) const override;
+    virtual bool IntersectP(const Ray &r) const override;
     GeometricPrimitive(const Reference<Shape> &s,
                        const Reference<Material> &m, AreaLight *a);
-    const AreaLight *GetAreaLight() const;
+    const AreaLight *GetAreaLight() const override;
     BSDF *GetBSDF(const DifferentialGeometry &dg,
-                  const Transform &ObjectToWorld, MemoryArena &arena) const;
+                  const Transform &ObjectToWorld, MemoryArena &arena) const override;
     BSSRDF *GetBSSRDF(const DifferentialGeometry &dg,
-                      const Transform &ObjectToWorld, MemoryArena &arena) const;
+                      const Transform &ObjectToWorld, MemoryArena &arena) const override;
 private:
     // GeometricPrimitive Private Data
     Reference<Shape> shape;
     Reference<Material> material;
     AreaLight *areaLight;
 };
-
-
 
 // TransformedPrimitive Declarations
 class TransformedPrimitive : public Primitive {
@@ -100,18 +97,19 @@ public:
     TransformedPrimitive(Reference<Primitive> &prim,
                          const AnimatedTransform &w2p)
         : primitive(prim), WorldToPrimitive(w2p) { }
-    bool Intersect(const Ray &r, Intersection *in) const;
-    bool IntersectP(const Ray &r) const;
-    const AreaLight *GetAreaLight() const { return NULL; }
+    //bool Intersect(const Ray &r, Intersection *in) const;
+    boost::optional<Intersection> Intersect(const Ray &r) const override;
+    bool IntersectP(const Ray &r) const override;
+    const AreaLight *GetAreaLight() const override { return nullptr; }
     BSDF *GetBSDF(const DifferentialGeometry &dg,
-                  const Transform &ObjectToWorld, MemoryArena &arena) const {
+                  const Transform &ObjectToWorld, MemoryArena &arena) const override {
         return NULL;
     }
     BSSRDF *GetBSSRDF(const DifferentialGeometry &dg,
-                  const Transform &ObjectToWorld, MemoryArena &arena) const {
+                  const Transform &ObjectToWorld, MemoryArena &arena) const override {
         return NULL;
     }
-    BBox WorldBound() const {
+    BBox WorldBound() const override {
         return WorldToPrimitive.MotionBounds(primitive->WorldBound(), true);
     }
 private:
@@ -126,11 +124,11 @@ private:
 class Aggregate : public Primitive {
 public:
     // Aggregate Public Methods
-    const AreaLight *GetAreaLight() const;
+    const AreaLight *GetAreaLight() const override;
     BSDF *GetBSDF(const DifferentialGeometry &dg,
-                  const Transform &, MemoryArena &) const;
+                  const Transform &, MemoryArena &) const override;
     BSSRDF *GetBSSRDF(const DifferentialGeometry &dg,
-                  const Transform &, MemoryArena &) const;
+                  const Transform &, MemoryArena &) const override;
 };
 
 

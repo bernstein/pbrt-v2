@@ -37,6 +37,7 @@
 #define PBRT_ACCELERATORS_GRID_H
 
 // accelerators/grid.h*
+#include <boost/optional.hpp>
 #include "pbrt.h"
 #include "primitive.h"
 
@@ -55,7 +56,7 @@ struct Voxel {
     void AddPrimitive(Reference<Primitive> prim) {
         primitives.push_back(prim);
     }
-    bool Intersect(const Ray &ray, Intersection *isect, RWMutexLock &lock);
+    boost::optional<Intersection> Intersect(const Ray &ray, RWMutexLock &lock);
     bool IntersectP(const Ray &ray, RWMutexLock &lock);
 private:
     vector<Reference<Primitive> > primitives;
@@ -72,7 +73,7 @@ public:
     BBox WorldBound() const;
     bool CanIntersect() const { return true; }
     ~GridAccel();
-    bool Intersect(const Ray &ray, Intersection *isect) const;
+    boost::optional<Intersection> Intersect(const Ray &ray) const;
     bool IntersectP(const Ray &ray) const;
 private:
     // GridAccel Private Methods

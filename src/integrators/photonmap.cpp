@@ -31,6 +31,7 @@
 
 
 // integrators/photonmap.cpp*
+#include <tuple>
 #include "stdafx.h"
 #include "integrators/photonmap.h"
 #include "scene.h"
@@ -437,13 +438,13 @@ void PhotonShootingTask::Run() {
                 // Follow photon path through scene and record intersections
                 PBRT_PHOTON_MAP_STARTED_RAY_PATH(&photonRay, &alpha);
                 bool specularPath = true;
-                Intersection photonIsect;
                 int nIntersections = 0;
-                while (scene.Intersect(photonRay, &photonIsect)) {
+                auto optPhotonIsect = scene.Intersect(photonRay);
+                while (optPhotonIsect) {
                     ++nIntersections;
                     // Handle photon/surface intersection
                     alpha *= renderer->Transmittance(scene, photonRay, NULL, rng, arena);
-                    BSDF *photonBSDF = photonIsect.GetBSDF(photonRay, arena);
+                    BSDF *photonBSDF = optPhotonIsect->GetBSDF(photonRay, arena);
                     BxDFType specularType = BxDFType(BSDF_REFLECTION |
                                             BSDF_TRANSMISSION | BSDF_SPECULAR);
                     bool hasNonSpecular = (photonBSDF->NumComponents() >
@@ -451,11 +452,11 @@ void PhotonShootingTask::Run() {
                     Vector wo = -photonRay.d;
                     if (hasNonSpecular) {
                         // Deposit photon at surface
-                        Photon photon(photonIsect.dg.p, alpha, wo);
+                        Photon photon(optPhotonIsect->dg.p, alpha, wo);
                         bool depositedPhoton = false;
                         if (specularPath && nIntersections > 1) {
                             if (!causticDone) {
-                                PBRT_PHOTON_MAP_DEPOSITED_CAUSTIC_PHOTON(&photonIsect.dg, &alpha, &wo);
+                                PBRT_PHOTON_MAP_DEPOSITED_CAUSTIC_PHOTON(&optPhotonIsect->dg, &alpha, &wo);
                                 depositedPhoton = true;
                                 localCausticPhotons.push_back(photon);
                             }
@@ -466,12 +467,12 @@ void PhotonShootingTask::Run() {
                             // want to waste memory storing too many if we're going a long time
                             // trying to get enough caustic photons desposited.
                             if (nIntersections == 1 && !indirectDone && integrator->finalGather) {
-                                PBRT_PHOTON_MAP_DEPOSITED_DIRECT_PHOTON(&photonIsect.dg, &alpha, &wo);
+                                PBRT_PHOTON_MAP_DEPOSITED_DIRECT_PHOTON(&optPhotonIsect->dg, &alpha, &wo);
                                 depositedPhoton = true;
                                 localDirectPhotons.push_back(photon);
                             }
                             else if (nIntersections > 1 && !indirectDone) {
-                                PBRT_PHOTON_MAP_DEPOSITED_INDIRECT_PHOTON(&photonIsect.dg, &alpha, &wo);
+                                PBRT_PHOTON_MAP_DEPOSITED_INDIRECT_PHOTON(&optPhotonIsect->dg, &alpha, &wo);
                                 depositedPhoton = true;
                                 localIndirectPhotons.push_back(photon);
                             }
@@ -480,9 +481,9 @@ void PhotonShootingTask::Run() {
                         // Possibly create radiance photon at photon intersection point
                         if (depositedPhoton && integrator->finalGather &&
                                 rng.RandomFloat() < .125f) {
-                            Normal n = photonIsect.dg.nn;
+                            Normal n = optPhotonIsect->dg.nn;
                             n = Faceforward(n, -photonRay.d);
-                            localRadiancePhotons.push_back(RadiancePhoton(photonIsect.dg.p, n));
+                            localRadiancePhotons.push_back(RadiancePhoton(optPhotonIsect->dg.p, n));
                             Spectrum rho_r = photonBSDF->rho(rng, BSDF_ALL_REFLECTION);
                             localRpReflectances.push_back(rho_r);
                             Spectrum rho_t = photonBSDF->rho(rng, BSDF_ALL_TRANSMISSION);
@@ -509,8 +510,9 @@ void PhotonShootingTask::Run() {
                     specularPath &= ((flags & BSDF_SPECULAR) != 0);
                     
                     if (indirectDone && !specularPath) break;
-                    photonRay = RayDifferential(photonIsect.dg.p, wi, photonRay,
-                                                photonIsect.rayEpsilon);
+                    photonRay = RayDifferential(optPhotonIsect->dg.p, wi, photonRay,
+                                                optPhotonIsect->rayEpsilon);
+                    optPhotonIsect = scene.Intersect(photonRay);
                 }
                 PBRT_PHOTON_MAP_FINISHED_RAY_PATH(&photonRay, &alpha);
             }
@@ -679,15 +681,15 @@ Spectrum PhotonIntegrator::Li(const Scene &scene, const Renderer *renderer,
 
                 // Trace BSDF final gather ray and accumulate radiance
                 RayDifferential bounceRay(p, wi, ray, isect.rayEpsilon);
-                Intersection gatherIsect;
-                if (scene.Intersect(bounceRay, &gatherIsect)) {
+                auto optGatherIsect = scene.Intersect(bounceRay);
+                if (optGatherIsect) {
                     // Compute exitant radiance _Lindir_ using radiance photons
                     Spectrum Lindir = 0.f;
-                    Normal nGather = gatherIsect.dg.nn;
+                    Normal nGather = optGatherIsect->dg.nn;
                     nGather = Faceforward(nGather, -bounceRay.d);
                     RadiancePhotonProcess proc(nGather);
                     float md2 = INFINITY;
-                    radianceMap->Lookup(gatherIsect.dg.p, proc, md2);
+                    radianceMap->Lookup(optGatherIsect->dg.p, proc, md2);
                     if (proc.photon != NULL)
                         Lindir = proc.photon->Lo;
                     Lindir *= renderer->Transmittance(scene, bounceRay, NULL, rng, arena);
@@ -725,16 +727,16 @@ Spectrum PhotonIntegrator::Li(const Scene &scene, const Renderer *renderer,
                 Spectrum fr = bsdf->f(wo, wi);
                 if (fr.IsBlack()) continue;
                 RayDifferential bounceRay(p, wi, ray, isect.rayEpsilon);
-                Intersection gatherIsect;
                 PBRT_PHOTON_MAP_STARTED_GATHER_RAY(&bounceRay);
-                if (scene.Intersect(bounceRay, &gatherIsect)) {
+                auto optGatherIsect = scene.Intersect(bounceRay);
+                if (optGatherIsect) {
                     // Compute exitant radiance _Lindir_ using radiance photons
                     Spectrum Lindir = 0.f;
-                    Normal nGather = gatherIsect.dg.nn;
+                    Normal nGather = optGatherIsect->dg.nn;
                     nGather = Faceforward(nGather, -bounceRay.d);
                     RadiancePhotonProcess proc(nGather);
                     float md2 = INFINITY;
-                    radianceMap->Lookup(gatherIsect.dg.p, proc, md2);
+                    radianceMap->Lookup(optGatherIsect->dg.p, proc, md2);
                     if (proc.photon != NULL)
                         Lindir = proc.photon->Lo;
                     Lindir *= renderer->Transmittance(scene, bounceRay, NULL, rng, arena);

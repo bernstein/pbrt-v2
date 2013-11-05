@@ -107,8 +107,11 @@ Spectrum CreateRadianceProbes::Li(const Scene &scene, const RayDifferential &ray
     if (!isect) isect = &localIsect;
     Assert(!ray.HasNaNs());
     Spectrum Lo = 0.f;
-    if (scene.Intersect(ray, isect))
-        Lo = surfaceIntegrator->Li(scene, this, ray, *isect, sample, rng, arena);
+    auto optIsect = scene.Intersect(ray);
+    if (optIsect) {
+      *isect = *optIsect;
+      Lo = surfaceIntegrator->Li(scene, this, ray, *isect, sample, rng, arena);
+    }
     else {
         for (uint32_t i = 0; i < scene.lights.size(); ++i)
            Lo += scene.lights[i]->Le(ray);
@@ -174,17 +177,26 @@ void CreateRadianceProbes::Render(const Scene &scene) {
             Ray ray(pray, dir, rayEpsilon, INFINITY, time);
         
             Intersection isect;
-            if (!scene.Intersect(ray, &isect) &&
+            auto optIsect = scene.Intersect(ray);
+            auto optSphereIsect = sphere.Intersect(ray);
+            if (!optIsect && !optSphereIsect)
+              break;
+            /*
+            if (!scene->Intersect(ray, &isect) &&
                 !sphere.Intersect(ray, &isect))
                 break;
-        
+            */
+
+            if (!optIsect)
+              optIsect = optSphereIsect;
+
             surfacePoints.push_back(ray(ray.maxt));
-        
-            DifferentialGeometry &hitGeometry = isect.dg;
-            pray = isect.dg.p;
-            rayEpsilon = isect.rayEpsilon;
+
+            DifferentialGeometry &hitGeometry = optIsect->dg;
+            pray = optIsect->dg.p;
+            rayEpsilon = optIsect->rayEpsilon;
             hitGeometry.nn = Faceforward(hitGeometry.nn, -ray.d);
-        
+
             dir = UniformSampleSphere(rng.RandomFloat(), rng.RandomFloat());
             dir = Faceforward(dir, hitGeometry.nn);
         }

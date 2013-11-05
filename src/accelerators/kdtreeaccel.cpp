@@ -34,6 +34,7 @@
 #include "stdafx.h"
 #include "accelerators/kdtreeaccel.h"
 #include "paramset.h"
+#include "intersection.h"
 
 // KdTreeAccel Local Declarations
 struct KdAccelNode {
@@ -274,8 +275,7 @@ void KdTreeAccel::buildTree(int nodeNum, const BBox &nodeBounds,
 }
 
 
-bool KdTreeAccel::Intersect(const Ray &ray,
-                            Intersection *isect) const {
+boost::optional<Intersection> KdTreeAccel::Intersect(const Ray &ray) const {
     PBRT_KDTREE_INTERSECTION_TEST(const_cast<KdTreeAccel *>(this), const_cast<Ray *>(&ray));
     // Compute initial parametric range of ray inside kd-tree extent
     float tmin, tmax;
@@ -292,8 +292,8 @@ bool KdTreeAccel::Intersect(const Ray &ray,
     int todoPos = 0;
 
     // Traverse kd-tree nodes in order for ray
-    bool hit = false;
     const KdAccelNode *node = &nodes[0];
+    boost::optional<Intersection> optIsect;
     while (node != NULL) {
         // Bail out if we found a hit closer than the current node
         if (ray.maxt < tmin) break;
@@ -341,10 +341,10 @@ bool KdTreeAccel::Intersect(const Ray &ray,
                 const Reference<Primitive> &prim = primitives[node->onePrimitive];
                 // Check one primitive inside leaf node
                 PBRT_KDTREE_INTERSECTION_PRIMITIVE_TEST(const_cast<Primitive *>(prim.GetPtr()));
-                if (prim->Intersect(ray, isect))
+                optIsect = prim->Intersect(ray);
+                if (optIsect)
                 {
                     PBRT_KDTREE_INTERSECTION_HIT(const_cast<Primitive *>(prim.GetPtr()));
-                    hit = true;
                 }
             }
             else {
@@ -353,10 +353,10 @@ bool KdTreeAccel::Intersect(const Ray &ray,
                     const Reference<Primitive> &prim = primitives[prims[i]];
                     // Check one primitive inside leaf node
                     PBRT_KDTREE_INTERSECTION_PRIMITIVE_TEST(const_cast<Primitive *>(prim.GetPtr()));
-                    if (prim->Intersect(ray, isect))
+                    optIsect = prim->Intersect(ray);
+                    if (optIsect)
                     {
                         PBRT_KDTREE_INTERSECTION_HIT(const_cast<Primitive *>(prim.GetPtr()));
-                        hit = true;
                     }
                 }
             }
@@ -373,7 +373,7 @@ bool KdTreeAccel::Intersect(const Ray &ray,
         }
     }
     PBRT_KDTREE_INTERSECTION_FINISHED();
-    return hit;
+    return optIsect;
 }
 
 

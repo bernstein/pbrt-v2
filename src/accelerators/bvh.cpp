@@ -29,12 +29,14 @@
 
  */
 
+#include <boost/optional.hpp>
 
 // accelerators/bvh.cpp*
 #include "stdafx.h"
 #include "accelerators/bvh.h"
 #include "probes.h"
 #include "paramset.h"
+#include "intersection.h"
 
 // BVHAccel Local Declarations
 struct BVHPrimitiveInfo {
@@ -385,8 +387,8 @@ BVHAccel::~BVHAccel() {
 }
 
 
-bool BVHAccel::Intersect(const Ray &ray, Intersection *isect) const {
-    if (!nodes) return false;
+boost::optional<Intersection> BVHAccel::Intersect(const Ray &ray) const {
+    if (!nodes) return boost::optional<Intersection>();
     PBRT_BVH_INTERSECTION_STARTED(const_cast<BVHAccel *>(this), const_cast<Ray *>(&ray));
     bool hit = false;
     Vector invDir(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
@@ -394,6 +396,8 @@ bool BVHAccel::Intersect(const Ray &ray, Intersection *isect) const {
     // Follow ray through BVH nodes to find primitive intersections
     uint32_t todoOffset = 0, nodeNum = 0;
     uint32_t todo[64];
+
+    Intersection isect;
     while (true) {
         const LinearBVHNode *node = &nodes[nodeNum];
         // Check ray against BVH node
@@ -404,10 +408,12 @@ bool BVHAccel::Intersect(const Ray &ray, Intersection *isect) const {
                 for (uint32_t i = 0; i < node->nPrimitives; ++i)
                 {
                     PBRT_BVH_INTERSECTION_PRIMITIVE_TEST(const_cast<Primitive *>(primitives[node->primitivesOffset+i].GetPtr()));
-                    if (primitives[node->primitivesOffset+i]->Intersect(ray, isect))
+                    auto optIsect = primitives[node->primitivesOffset+i]->Intersect(ray);
+                    if (optIsect)
                     {
                         PBRT_BVH_INTERSECTION_PRIMITIVE_HIT(const_cast<Primitive *>(primitives[node->primitivesOffset+i].GetPtr()));
                         hit = true;
+                        isect  = *optIsect;
                     }
                     else {
                         PBRT_BVH_INTERSECTION_PRIMITIVE_MISSED(const_cast<Primitive *>(primitives[node->primitivesOffset+i].GetPtr()));
@@ -435,7 +441,10 @@ bool BVHAccel::Intersect(const Ray &ray, Intersection *isect) const {
         }
     }
     PBRT_BVH_INTERSECTION_FINISHED();
-    return hit;
+    if (hit)
+      return boost::make_optional(isect);
+    else
+      return boost::optional<Intersection>();
 }
 
 

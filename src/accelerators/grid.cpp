@@ -35,6 +35,8 @@
 #include "accelerators/grid.h"
 #include "probes.h"
 #include "paramset.h"
+#include "intersection.h"
+#include <boost/optional.hpp>
 
 // GridAccel Method Definitions
 GridAccel::GridAccel(const vector<Reference<Primitive> > &p,
@@ -120,7 +122,7 @@ GridAccel::~GridAccel() {
 }
 
 
-bool GridAccel::Intersect(const Ray &ray, Intersection *isect) const {
+boost::optional<Intersection> GridAccel::Intersect(const Ray &ray) const {
     PBRT_GRID_INTERSECTION_TEST(const_cast<GridAccel *>(this), const_cast<Ray *>(&ray));
     // Check ray against overall grid bounds
     float rayT;
@@ -159,13 +161,14 @@ bool GridAccel::Intersect(const Ray &ray, Intersection *isect) const {
 
     // Walk ray through voxel grid
     RWMutexLock lock(*rwMutex, READ);
-    bool hitSomething = false;
+    boost::optional<Intersection> optIsect;
     for (;;) {
         // Check for intersection in current voxel and advance to next
         Voxel *voxel = voxels[offset(Pos[0], Pos[1], Pos[2])];
         PBRT_GRID_RAY_TRAVERSED_VOXEL(Pos, voxel ? voxel->size() : 0);
-        if (voxel != NULL)
-            hitSomething |= voxel->Intersect(ray, isect, lock);
+        if (voxel != NULL) {
+            optIsect = voxel->Intersect(ray, lock);
+        }
 
         // Advance to next voxel
 
@@ -182,12 +185,11 @@ bool GridAccel::Intersect(const Ray &ray, Intersection *isect) const {
             break;
         NextCrossingT[stepAxis] += DeltaT[stepAxis];
     }
-    return hitSomething;
+    return optIsect;
 }
 
 
-bool Voxel::Intersect(const Ray &ray, Intersection *isect,
-                      RWMutexLock &lock) {
+boost::optional<Intersection> Voxel::Intersect(const Ray &ray, RWMutexLock &lock) {
     // Refine primitives in voxel if needed
     if (!allCanIntersect) {
         lock.UpgradeToWrite();
@@ -209,17 +211,16 @@ bool Voxel::Intersect(const Ray &ray, Intersection *isect,
     }
 
     // Loop over primitives in voxel and find intersections
-    bool hitSomething = false;
+    boost::optional<Intersection> optIsect;
     for (uint32_t i = 0; i < primitives.size(); ++i) {
         Reference<Primitive> &prim = primitives[i];
         PBRT_GRID_RAY_PRIMITIVE_INTERSECTION_TEST(const_cast<Primitive *>(prim.GetPtr()));
-        if (prim->Intersect(ray, isect))
-        {
-        PBRT_GRID_RAY_PRIMITIVE_HIT(const_cast<Primitive *>(prim.GetPtr()));
-            hitSomething = true;
+        optIsect = prim->Intersect(ray);
+        if (optIsect) {
+          PBRT_GRID_RAY_PRIMITIVE_HIT(const_cast<Primitive *>(prim.GetPtr()));
         }
     }
-    return hitSomething;
+    return optIsect;
 }
 
 

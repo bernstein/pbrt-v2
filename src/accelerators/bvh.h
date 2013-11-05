@@ -37,6 +37,7 @@
 #define PBRT_ACCELERATORS_BVH_H
 
 // accelerators/bvh.h*
+#include <boost/optional.hpp>
 #include "pbrt.h"
 #include "primitive.h"
 struct BVHBuildNode;
@@ -54,7 +55,7 @@ public:
     BBox WorldBound() const;
     bool CanIntersect() const { return true; }
     ~BVHAccel();
-    bool Intersect(const Ray &ray, Intersection *isect) const;
+    boost::optional<Intersection> Intersect(const Ray &ray) const;
     bool IntersectP(const Ray &ray) const;
 private:
     // BVHAccel Private Methods

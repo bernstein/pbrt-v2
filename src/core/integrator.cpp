@@ -31,6 +31,7 @@
 
 
 // core/integrator.cpp*
+#include <tuple>
 #include "stdafx.h"
 #include "integrator.h"
 #include "scene.h"
@@ -155,12 +156,12 @@ Spectrum EstimateDirect(const Scene &scene, const Renderer *renderer,
                 weight = PowerHeuristic(1, bsdfPdf, 1, lightPdf);
             }
             // Add light contribution from BSDF sampling
-            Intersection lightIsect;
             Spectrum Li(0.f);
             RayDifferential ray(p, wi, rayEpsilon, INFINITY, time);
-            if (scene.Intersect(ray, &lightIsect)) {
-                if (lightIsect.primitive->GetAreaLight() == light)
-                    Li = lightIsect.Le(-wi);
+            auto lightIsect = scene.Intersect(ray);
+            if (lightIsect) {
+                if (lightIsect->primitive->GetAreaLight() == light)
+                    Li = lightIsect->Le(-wi);
             }
             else
                 Li = light->Le(ray);

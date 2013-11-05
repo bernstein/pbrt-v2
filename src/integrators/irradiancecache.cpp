@@ -31,6 +31,7 @@
 
 
 // integrators/irradiancecache.cpp*
+#include <tuple>
 #include "stdafx.h"
 #include "integrators/irradiancecache.h"
 #include "camera.h"
@@ -184,9 +185,9 @@ void IrradiancePrimeTask::Run() {
         for (int i = 0; i < sampleCount; ++i) {
             RayDifferential ray;
             camera->GenerateRayDifferential(samples[i], &ray);
-            Intersection isect;
-            if (scene.Intersect(ray, &isect))
-                (void)irradianceCache->Li(scene, renderer, ray, isect, &samples[i], rng, arena);
+            auto optIsect = scene.Intersect(ray);
+            if (optIsect)
+                (void)irradianceCache->Li(scene, renderer, ray, *optIsect, &samples[i], rng, arena);
         }
         arena.FreeAll();
     }
@@ -340,23 +341,23 @@ Spectrum IrradianceCacheIntegrator::pathL(Ray &r, const Scene &scene,
     bool specularBounce = false;
     for (int pathLength = 0; ; ++pathLength) {
         // Find next vertex of path
-        Intersection isect;
-        if (!scene.Intersect(ray, &isect))
+        auto optIsect = scene.Intersect(ray);
+        if (!optIsect)
             break;
         if (pathLength == 0)
             r.maxt = ray.maxt;
         pathThroughput *= renderer->Transmittance(scene, ray, NULL, rng, arena);
         // Possibly add emitted light at path vertex
         if (specularBounce)
-            L += pathThroughput * isect.Le(-ray.d);
+            L += pathThroughput * optIsect->Le(-ray.d);
         // Evaluate BSDF at hit point
-        BSDF *bsdf = isect.GetBSDF(ray, arena);
+        BSDF *bsdf = optIsect->GetBSDF(ray, arena);
         // Sample illumination from lights to find path contribution
         const Point &p = bsdf->dgShading.p;
         const Normal &n = bsdf->dgShading.nn;
         Vector wo = -ray.d;
         L += pathThroughput *
-            UniformSampleOneLight(scene, renderer, arena, p, n, wo, isect.rayEpsilon,
+            UniformSampleOneLight(scene, renderer, arena, p, n, wo, optIsect->rayEpsilon,
                                   ray.time, bsdf, NULL, rng);
         if (pathLength+1 == maxIndirectDepth) break;
         // Sample BSDF to get new path direction
@@ -370,7 +371,7 @@ Spectrum IrradianceCacheIntegrator::pathL(Ray &r, const Scene &scene,
             break;
         specularBounce = (flags & BSDF_SPECULAR) != 0;
         pathThroughput *= f * AbsDot(wi, n) / pdf;
-        ray = RayDifferential(p, wi, ray, isect.rayEpsilon);
+        ray = RayDifferential(p, wi, ray, optIsect->rayEpsilon);
         // Possibly terminate the path
         if (pathLength > 2) {
             float rrProb = min(1.f, pathThroughput.y());

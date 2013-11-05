@@ -37,6 +37,7 @@
 #define PBRT_ACCELERATORS_KDTREEACCEL_H
 
 // accelerators/kdtreeaccel.h*
+#include <boost/optional.hpp>
 #include "pbrt.h"
 #include "primitive.h"
 
@@ -52,7 +53,7 @@ public:
     BBox WorldBound() const { return bounds; }
     bool CanIntersect() const { return true; }
     ~KdTreeAccel();
-    bool Intersect(const Ray &ray, Intersection *isect) const;
+    boost::optional<Intersection> Intersect(const Ray &ray) const;
     bool IntersectP(const Ray &ray) const;
 private:
     // KdTreeAccel Private Methods

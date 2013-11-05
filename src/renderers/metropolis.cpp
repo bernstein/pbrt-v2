@@ -29,8 +29,8 @@
 
  */
 
-
 // renderers/metropolis.cpp*
+#include <tuple>
 #include "stdafx.h"
 #include "renderers/metropolis.h"
 #include "renderers/samplerrenderer.h"
@@ -55,13 +55,11 @@ struct PathSample {
     float rrSample;
 };
 
-
 struct LightingSample {
     BSDFSample bsdfSample;
     float lightNum;
     LightSample lightSample;
 };
-
 
 struct MLTSample {
     MLTSample(int maxLength) {
@@ -74,7 +72,6 @@ struct MLTSample {
     vector<PathSample> cameraPathSamples, lightPathSamples;
     vector<LightingSample> lightingSamples;
 };
-
 
 static void LargeStep(RNG &rng, MLTSample *sample, int maxDepth,
         float x, float y, float t0, float t1, bool bidirectional) {
@@ -118,7 +115,6 @@ static void LargeStep(RNG &rng, MLTSample *sample, int maxDepth,
     }
 }
 
-
 static inline void mutate(RNG &rng, float *v, float min = 0.f,
                           float max = 1.f) {
     if (min == max) { *v = min; return; }
@@ -136,7 +132,6 @@ static inline void mutate(RNG &rng, float *v, float min = 0.f,
     }
     if (*v < min || *v >= max) *v = min;
 }
-
 
 static void SmallStep(RNG &rng, MLTSample *sample, int maxDepth,
         int x0, int x1, int y0, int y1, float t0, float t1,
@@ -165,7 +160,7 @@ static void SmallStep(RNG &rng, MLTSample *sample, int maxDepth,
         mutate(rng, &ls.lightSample.uPos[0]);
         mutate(rng, &ls.lightSample.uPos[1]);
     }
-    
+
     if (bidirectional) {
         mutate(rng, &sample->lightNumSample);
         for (int i = 0; i < 5; ++i)
@@ -181,7 +176,6 @@ static void SmallStep(RNG &rng, MLTSample *sample, int maxDepth,
     }
 }
 
-
 struct PathVertex {
     Intersection isect;
     Vector wPrev, wNext;
@@ -190,7 +184,6 @@ struct PathVertex {
     int nSpecularComponents;
     Spectrum alpha;
 };
-
 
 static uint32_t GeneratePath(const RayDifferential &r, const Spectrum &alpha,
     const Scene &scene, MemoryArena &arena, const vector<PathSample> &samples,
@@ -222,8 +215,6 @@ private:
     Distribution1D *lightDistribution;
 };
 
-
-
 // Metropolis Method Definitions
 static uint32_t GeneratePath(const RayDifferential &r,
         const Spectrum &a, const Scene &scene, MemoryArena &arena,
@@ -237,7 +228,10 @@ static uint32_t GeneratePath(const RayDifferential &r,
     for (; length < samples.size(); ++length) {
         // Try to generate next vertex of ray path
         PathVertex &v = path[length];
-        if (!scene.Intersect(ray, &v.isect)) {
+        auto optIsect = scene.Intersect(ray);
+        if (optIsect) 
+          v.isect = *optIsect;
+        if (!optIsect) {
             // Handle ray that leaves the scene during path generation
             if (escapedAlpha) *escapedAlpha = alpha;
             if (escapedRay)   *escapedRay = ray;
@@ -281,7 +275,6 @@ static uint32_t GeneratePath(const RayDifferential &r,
     PBRT_MLT_FINISHED_GENERATE_PATH();
     return length;
 }
-
 
 Spectrum MetropolisRenderer::PathL(const MLTSample &sample,
         const Scene &scene, MemoryArena &arena, const Camera *camera,
@@ -790,9 +783,11 @@ Spectrum MetropolisRenderer::Li(const Scene &scene, const RayDifferential &ray,
     Intersection localIsect;
     if (!isect) isect = &localIsect;
     Spectrum Lo = 0.f;
-    if (scene.Intersect(ray, isect))
-        Lo = directLighting->Li(scene, this, ray, *isect, sample,
-                                rng, arena);
+    auto optIsect = scene.Intersect(ray);
+    if (optIsect) {
+      *isect = *optIsect;
+      Lo = directLighting->Li(scene, this, ray, *isect, sample, rng, arena);
+    }
     else {
         // Handle ray that doesn't intersect any geometry
         for (uint32_t i = 0; i < scene.lights.size(); ++i)

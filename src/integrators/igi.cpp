@@ -31,6 +31,7 @@
 
 
 // integrators/igi.cpp*
+#include <tuple>
 #include "stdafx.h"
 #include "integrators/igi.h"
 #include "scene.h"
@@ -108,17 +109,18 @@ void IGIIntegrator::Preprocess(const Scene &scene, const Camera *camera,
             if (pdf == 0.f || alpha.IsBlack()) continue;
             alpha /= pdf * lightPdf;
             Intersection isect;
-            while (scene.Intersect(ray, &isect) && !alpha.IsBlack()) {
+            auto optIsect = scene.Intersect(ray);
+            while (optIsect && !alpha.IsBlack()) {
                 // Create virtual light and sample new ray for path
                 alpha *= renderer->Transmittance(scene, RayDifferential(ray), NULL,
                                                  rng, arena);
                 Vector wo = -ray.d;
-                BSDF *bsdf = isect.GetBSDF(ray, arena);
+                BSDF *bsdf = optIsect->GetBSDF(ray, arena);
 
                 // Create virtual light at ray intersection point
                 Spectrum contrib = alpha * bsdf->rho(wo, rng) / M_PI;
-                virtualLights[s].push_back(VirtualLight(isect.dg.p, isect.dg.nn, contrib,
-                                                        isect.rayEpsilon));
+                virtualLights[s].push_back(VirtualLight(optIsect->dg.p, optIsect->dg.nn, contrib,
+                                                        optIsect->rayEpsilon));
 
                 // Sample new ray direction and update weight for virtual light path
                 Vector wi;
@@ -134,7 +136,8 @@ void IGIIntegrator::Preprocess(const Scene &scene, const Camera *camera,
                 if (rng.RandomFloat() > rrProb)
                     break;
                 alpha *= contribScale / rrProb;
-                ray = RayDifferential(isect.dg.p, wi, ray, isect.rayEpsilon);
+                ray = RayDifferential(optIsect->dg.p, wi, ray, optIsect->rayEpsilon);
+                optIsect = scene.Intersect(ray);
             }
             arena.FreeAll();
         }

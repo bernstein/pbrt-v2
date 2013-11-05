@@ -94,7 +94,9 @@ void SamplerRendererTask::Run() {
             // Evaluate radiance along camera ray
             PBRT_STARTED_CAMERA_RAY_INTEGRATION(&rays[i], &samples[i]);
             if (visualizeObjectIds) {
-                if (rayWeight > 0.f && scene.Intersect(rays[i], &isects[i])) {
+                auto optIsect = scene.Intersect(rays[i]);
+                if (rayWeight > 0.f && optIsect) {
+                    isects[i] = *optIsect;
                     // random shading based on shape id...
                     uint32_t ids[2] = { isects[i].shapeId, isects[i].primitiveId };
                     uint32_t h = hash((char *)ids, sizeof(ids));
@@ -233,9 +235,12 @@ Spectrum SamplerRenderer::Li(const Scene &scene,
     Intersection localIsect;
     if (!isect) isect = &localIsect;
     Spectrum Li = 0.f;
-    if (scene.Intersect(ray, isect))
-        Li = surfaceIntegrator->Li(scene, this, ray, *isect, sample,
+    auto optIsect = scene.Intersect(ray);
+    if (optIsect) {
+      *isect = *optIsect;
+      Li = surfaceIntegrator->Li(scene, this, ray, *isect, sample,
                                    rng, arena);
+    }
     else {
         // Handle ray that doesn't intersect any geometry
         for (uint32_t i = 0; i < scene.lights.size(); ++i)
