@@ -170,12 +170,13 @@ void SamplerRendererTask::Run() {
 // SamplerRenderer Method Definitions
 SamplerRenderer::SamplerRenderer(Sampler *s, Camera *c,
                                  SurfaceIntegrator *si, VolumeIntegrator *vi,
-                                 bool visIds) {
-    sampler = s;
-    camera = c;
-    surfaceIntegrator = si;
-    volumeIntegrator = vi;
-    visualizeObjectIds = visIds;
+                                 bool visIds) 
+  : visualizeObjectIds(visIds)
+  , sampler(s)
+  , camera(c)
+  , surfaceIntegrator(si)
+  , volumeIntegrator(vi)
+{
 }
 
 
