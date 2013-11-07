@@ -72,12 +72,16 @@ public:
     SamplerRendererTask(const Scene &sc, Renderer *ren, Camera *c,
                         ProgressReporter &pr, Sampler *ms, Sample *sam, 
                         bool visIds, int tn, int tc)
-      : reporter(pr)
-      , scene(sc)
-    {
-         renderer = ren; camera = c; mainSampler = ms;
-        origSample = sam; visualizeObjectIds = visIds; taskNum = tn; taskCount = tc;
-    }
+      : scene(sc)
+      , renderer(ren)
+      , camera(c)
+      , mainSampler(ms)
+      , reporter(pr)
+      , origSample(sam)
+      , visualizeObjectIds(visIds)
+      , taskNum(tn)
+      , taskCount(tc)
+    {}
     void Run();
 private:
     // SamplerRendererTask Private Data
