@@ -190,7 +190,12 @@ private:
     int nBxDFs;
 #define MAX_BxDFS 8
     BxDF *bxdfs[MAX_BxDFS];
-    friend class MixMaterial;
+    friend BSDF* mix(Reference<Material> m1, Reference<Material> m2,
+                  Reference<Texture<Spectrum> > scale,
+                  const DifferentialGeometry &dgGeom,
+                  const DifferentialGeometry &dgShading,
+                  MemoryArena &arena);
+
 };
 
 

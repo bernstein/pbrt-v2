@@ -45,21 +45,43 @@
 class Material : public ReferenceCounted {
 public:
     // Material Interface
-    virtual BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
+    Material() {
+      getBSSRDF = [](const DifferentialGeometry&,const DifferentialGeometry&,
+                     MemoryArena&) -> BSSRDF* {
+        return NULL;
+      };
+    }
+    Material(std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&,
+                          MemoryArena&)> const& f) : getBSDF(f) {
+      getBSSRDF = [] (const DifferentialGeometry&,const DifferentialGeometry&,
+                          MemoryArena&) -> BSSRDF* {
+        return NULL;
+      };
+    }
+    Material(std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&,
+                          MemoryArena&)> const& f,
+            std::function<BSSRDF*(const DifferentialGeometry&,const DifferentialGeometry&,
+                          MemoryArena&)> const& f2)
+            : getBSDF(f), getBSSRDF(f2) {}
+
+    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
                           const DifferentialGeometry &dgShading,
-                          MemoryArena &arena) const = 0;
-    virtual BSSRDF *GetBSSRDF(const DifferentialGeometry &dgGeom,
+                          MemoryArena &arena) const
+    {
+      return getBSDF(dgGeom, dgShading, arena);
+    }
+    BSSRDF *GetBSSRDF(const DifferentialGeometry &dgGeom,
                               const DifferentialGeometry &dgShading,
                               MemoryArena &arena) const {
-        return NULL;
+        return getBSSRDF(dgGeom, dgShading, arena);
     }
-    virtual ~Material() {}
     static void Bump(const Reference<Texture<float> > &d, const DifferentialGeometry &dgGeom,
         const DifferentialGeometry &dgShading, DifferentialGeometry *dgBump);
+
     std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&,
                           MemoryArena&)> getBSDF;
+    std::function<BSSRDF*(const DifferentialGeometry&,const DifferentialGeometry&,
+                          MemoryArena&)> getBSSRDF;
 };
-
-
 
 #endif // PBRT_CORE_MATERIAL_H

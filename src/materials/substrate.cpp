@@ -39,11 +39,18 @@
 #include "texture.h"
 
 // SubstrateMaterial Method Definitions
-BSDF *SubstrateMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF* substrate(
+    Reference<Texture<Spectrum> > Kd, Reference<Texture<Spectrum> > Ks,
+    Reference<Texture<float> > nu, Reference<Texture<float> > nv,
+    Reference<Texture<float> > bumpMap,
+    const DifferentialGeometry &dgGeom,
+    const DifferentialGeometry &dgShading,
+    MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -57,15 +64,13 @@ BSDF *SubstrateMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const Diffe
     return bsdf;
 }
 
-
-SubstrateMaterial *CreateSubstrateMaterial(const Transform &xform,
+Material *CreateSubstrateMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(.5f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(.5f));
     Reference<Texture<float> > uroughness = mp.GetFloatTexture("uroughness", .1f);
     Reference<Texture<float> > vroughness = mp.GetFloatTexture("vroughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new SubstrateMaterial(Kd, Ks, uroughness, vroughness, bumpMap);
+    return new Material(std::bind(substrate, Kd, Ks, uroughness, vroughness, bumpMap, _1, _2, _3));
 }
-
-

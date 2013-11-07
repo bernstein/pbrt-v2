@@ -40,9 +40,12 @@
 #include "texture.h"
 
 // MixMaterial Method Definitions
-BSDF *MixMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-                           const DifferentialGeometry &dgShading,
-                           MemoryArena &arena) const {
+BSDF* mix(Reference<Material> m1, Reference<Material> m2,
+          Reference<Texture<Spectrum> > scale,
+          const DifferentialGeometry &dgGeom,
+          const DifferentialGeometry &dgShading,
+          MemoryArena &arena)
+{
     BSDF *b1 = m1->GetBSDF(dgGeom, dgShading, arena);
     BSDF *b2 = m2->GetBSDF(dgGeom, dgShading, arena);
     Spectrum s1 = scale->Evaluate(dgShading).Clamp();
@@ -55,13 +58,13 @@ BSDF *MixMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
     return b1;
 }
 
-
-MixMaterial *CreateMixMaterial(const Transform &xform,
+Material* CreateMixMaterial(const Transform &xform,
         const TextureParams &mp, const Reference<Material> &m1,
         const Reference<Material> &m2) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > scale = mp.GetSpectrumTexture("amount",
         Spectrum(0.5f));
-    return new MixMaterial(m1, m2, scale);
+    return new Material(std::bind(mix, m1, m2, scale, _1, _2, _3));
 }
 
 

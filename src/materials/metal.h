@@ -41,24 +41,6 @@
 #include "material.h"
 #include "spectrum.h"
 
-// MetalMaterial Declarations
-class MetalMaterial : public Material {
-public:
-    // MetalMaterial Public Methods
-    MetalMaterial(Reference<Texture<Spectrum> > eta,
-        Reference<Texture<Spectrum> > k, Reference<Texture<float> > rough,
-        Reference<Texture<float> > bump);
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
-        const DifferentialGeometry &dgShading, MemoryArena &arena) const;
-private:
-    // MetalMaterial Private Data
-    Reference<Texture<Spectrum> > eta, k;
-    Reference<Texture<float> > roughness;
-    Reference<Texture<float> > bumpMap;
-};
-
-
-MetalMaterial *CreateMetalMaterial(const Transform &xform,
-        const TextureParams &mp);
+Material* CreateMetalMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_METAL_H

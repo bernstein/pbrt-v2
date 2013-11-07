@@ -40,6 +40,9 @@
 #include "pbrt.h"
 #include "geometry.h"
 #include "transform.h"
+#include "film.h"
+#include <functional>
+#include <memory>
 
 // Camera Declarations
 class Camera {
@@ -47,7 +50,7 @@ public:
     // Camera Interface
     Camera(const AnimatedTransform &cam2world, float sopen, float sclose,
            Film *film);
-    virtual ~Camera();
+    virtual ~Camera() { delete film; }
     virtual float GenerateRay(const CameraSample &sample,
                               Ray *ray) const = 0;
     virtual float GenerateRayDifferential(const CameraSample &sample, RayDifferential *rd) const;
@@ -56,8 +59,10 @@ public:
     AnimatedTransform CameraToWorld;
     const float shutterOpen, shutterClose;
     Film *film;
-};
 
+    std::function<float(const CameraSample&, Ray*)> genRay;
+    std::function<float(const CameraSample&, RayDifferential*)> genRayD;
+};
 
 class ProjectiveCamera : public Camera {
 public:
@@ -71,7 +76,5 @@ protected:
     Transform ScreenToRaster, RasterToScreen;
     float lensRadius, focalDistance;
 };
-
-
 
 #endif // PBRT_CORE_CAMERA_H

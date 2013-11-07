@@ -37,15 +37,20 @@
 #include "reflection.h"
 #include "paramset.h"
 #include "texture.h"
-
-// PlasticMaterial Method Definitions
-BSDF *PlasticMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-                               const DifferentialGeometry &dgShading,
-                               MemoryArena &arena) const {
+    //return new PlasticMaterial(Kd, Ks, roughness, bumpMap);
+BSDF*
+plastic(Reference<Texture<Spectrum> > Kd,
+        Reference<Texture<Spectrum> > Ks,
+        Reference<Texture<float> > roughness,
+        Reference<Texture<float> > bumpMap,
+        const DifferentialGeometry &dgGeom,
+        const DifferentialGeometry &dgShading,
+        MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -65,14 +70,12 @@ BSDF *PlasticMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
     return bsdf;
 }
 
-
-PlasticMaterial *CreatePlasticMaterial(const Transform &xform,
+Material* CreatePlasticMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(0.25f));
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new PlasticMaterial(Kd, Ks, roughness, bumpMap);
+    return new Material(std::bind(plastic, Kd, Ks, roughness, bumpMap, _1, _2, _3));
 }
-
-

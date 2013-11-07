@@ -40,25 +40,13 @@
 #include "pbrt.h"
 #include "material.h"
 
-// MixMaterial Declarations
-class MixMaterial : public Material {
-public:
-    // MixMaterial Public Methods
-    MixMaterial(Reference<Material> mat1, Reference<Material> mat2,
-                Reference<Texture<Spectrum> > sc)
-        : m1(mat1), m2(mat2), scale(sc) {
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
-                  const DifferentialGeometry &dgShading,
-                  MemoryArena &arena) const;
-private:
-    // MixMaterial Private Data
-    Reference<Material> m1, m2;
-    Reference<Texture<Spectrum> > scale;
-};
+BSDF* mix(Reference<Material> m1, Reference<Material> m2,
+          Reference<Texture<Spectrum> > scale,
+          const DifferentialGeometry &dgGeom,
+          const DifferentialGeometry &dgShading,
+          MemoryArena &arena);
 
-
-MixMaterial *CreateMixMaterial(const Transform &xform,
+Material *CreateMixMaterial(const Transform &xform,
     const TextureParams &mp, const Reference<Material> &m1,
     const Reference<Material> &m2);
 

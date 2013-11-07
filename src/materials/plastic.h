@@ -40,27 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-// PlasticMaterial Declarations
-class PlasticMaterial : public Material {
-public:
-    // PlasticMaterial Public Methods
-    PlasticMaterial(Reference<Texture<Spectrum> > kd,
-                    Reference<Texture<Spectrum> > ks,
-                    Reference<Texture<float> > rough,
-                    Reference<Texture<float> > bump)
-        : Kd(kd), Ks(ks), roughness(rough), bumpMap(bump) {
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
-                  const DifferentialGeometry &dgShading,
-                  MemoryArena &arena) const;
-private:
-    // PlasticMaterial Private Data
-    Reference<Texture<Spectrum> > Kd, Ks;
-    Reference<Texture<float> > roughness, bumpMap;
-};
-
-
-PlasticMaterial *CreatePlasticMaterial(const Transform &xform,
+Material* CreatePlasticMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_PLASTIC_H

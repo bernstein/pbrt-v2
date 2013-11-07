@@ -39,11 +39,16 @@
 #include "texture.h"
 
 // MirrorMaterial Method Definitions
-BSDF *MirrorMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF* mirror(Reference<Texture<Spectrum> > Kr,
+             Reference<Texture<float> > bumpMap,
+             const DifferentialGeometry& dgGeom,
+             const DifferentialGeometry &dgShading,
+             MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -54,12 +59,12 @@ BSDF *MirrorMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const Differen
     return bsdf;
 }
 
-
-MirrorMaterial *CreateMirrorMaterial(const Transform &xform,
+Material* CreateMirrorMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(0.9f));
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new MirrorMaterial(Kr, bumpMap);
+    return new Material(std::bind(mirror, Kr, bumpMap, _1, _2, _3));
 }
 
 

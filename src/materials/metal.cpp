@@ -37,23 +37,17 @@
 #include "paramset.h"
 #include "texture.h"
 
-// MetalMaterial Method Definitions
-MetalMaterial::MetalMaterial(Reference<Texture<Spectrum> > et,
-        Reference<Texture<Spectrum> > kk, Reference<Texture<float> > rough,
-        Reference<Texture<float> > bump) {
-    eta = et;
-    k = kk;
-    roughness = rough;
-    bumpMap = bump;
-}
-
-
-BSDF *MetalMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-        const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF* Metal(Reference<Texture<Spectrum> > eta,
+            Reference<Texture<Spectrum> > k,
+            Reference<Texture<float> > roughness,
+            Reference<Texture<float> > bumpMap,
+            const DifferentialGeometry &dgGeom,
+            const DifferentialGeometry &dgShading, MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -95,7 +89,9 @@ const float CopperK[CopperSamples] = {
     2.160063, 2.21, 2.249938, 2.289, 2.326, 2.362, 2.397625, 2.433, 2.469187, 2.504, 2.535875, 2.564,
     2.589625, 2.605, 2.595562, 2.583, 2.5765, 2.599, 2.678062, 2.809, 3.01075, 3.24, 3.458187, 3.67,
     3.863125, 4.05, 4.239563, 4.43, 4.619563, 4.817, 5.034125, 5.26, 5.485625, 5.717 };
-MetalMaterial *CreateMetalMaterial(const Transform &xform, const TextureParams &mp) {
+
+Material *CreateMetalMaterial(const Transform &xform, const TextureParams &mp) {
+    using namespace std::placeholders;
     static Spectrum copperN = Spectrum::FromSampled(CopperWavelengths, CopperN, CopperSamples);
     Reference<Texture<Spectrum> > eta = mp.GetSpectrumTexture("eta", copperN);
 
@@ -104,7 +100,7 @@ MetalMaterial *CreateMetalMaterial(const Transform &xform, const TextureParams &
 
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .01f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new MetalMaterial(eta, k, roughness, bumpMap);
+    return new Material(std::bind(Metal,eta, k, roughness, bumpMap, _1,_2,_3));
 }
 
 

@@ -48,15 +48,19 @@ static inline Spectrum FresnelApproxK(const Spectrum &Fr) {
     return 2.f * Sqrt(reflectance / (Spectrum(1.) - reflectance));
 }
 
-
 // ShinyMetalMaterial Method Definitions
-BSDF *ShinyMetalMaterial::GetBSDF(const DifferentialGeometry &dgGeom, 
-                                  const DifferentialGeometry &dgShading,
-                                  MemoryArena &arena) const {
+BSDF* shinyMetal(const Reference<Texture<Spectrum> > &Ks,
+                 const Reference<Texture<float> > &roughness,
+                 const Reference<Texture<Spectrum> > &Kr,
+                 const Reference<Texture<float> > &bumpMap,
+                 const DifferentialGeometry &dgGeom,
+                 const DifferentialGeometry &dgShading,
+                 MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump-mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -77,11 +81,12 @@ BSDF *ShinyMetalMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
     return bsdf;
 }
 
-ShinyMetalMaterial *CreateShinyMetalMaterial(const Transform &xform,
-                                             const TextureParams &mp) {
+Material* CreateShinyMetalMaterial(const Transform &xform,
+                                   const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(1.f));
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new ShinyMetalMaterial(Ks, roughness, Kr, bumpMap);
+    return new Material(std::bind(shinyMetal, Ks, roughness, Kr, bumpMap, _1, _2, _3));
 }

@@ -39,11 +39,19 @@
 #include "texture.h"
 
 // TranslucentMaterial Method Definitions
-BSDF *TranslucentMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF* translucent(Reference<Texture<Spectrum> > Kd, Reference<Texture<Spectrum> > Ks,
+                  Reference<Texture<float> > roughness,
+                  Reference<Texture<Spectrum> > reflect,
+                  Reference<Texture<Spectrum> > transmit,
+                  Reference<Texture<float> > bumpMap,
+                  const DifferentialGeometry &dgGeom,
+                  const DifferentialGeometry &dgShading,
+                  MemoryArena &arena)
+{
     float ior = 1.5f;
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn, ior);
@@ -74,16 +82,14 @@ BSDF *TranslucentMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const Dif
     return bsdf;
 }
 
-
-TranslucentMaterial *CreateTranslucentMaterial(const Transform &xform,
+Material *CreateTranslucentMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(0.25f));
     Reference<Texture<Spectrum> > reflect = mp.GetSpectrumTexture("reflect", Spectrum(0.5f));
     Reference<Texture<Spectrum> > transmit = mp.GetSpectrumTexture("transmit", Spectrum(0.5f));
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new TranslucentMaterial(Kd, Ks, roughness, reflect, transmit, bumpMap);
+    return new Material(std::bind(translucent, Kd, Ks, roughness, reflect, transmit, bumpMap, _1, _2, _3));
 }
-
-

@@ -38,14 +38,16 @@
 #include "diffgeom.h"
 #include "texture.h"
 
-// MatteMaterial Method Definitions
-BSDF *MatteMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-                             const DifferentialGeometry &dgShading,
-                             MemoryArena &arena) const {
-    // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
+BSDF* matte(Reference<Texture<Spectrum> > Kd,
+            Reference<Texture<float> > sigma,
+            Reference<Texture<float> > bumpMap,
+            const DifferentialGeometry& dgGeom,
+            const DifferentialGeometry& dgShading,
+            MemoryArena& arena)
+{
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -60,15 +62,14 @@ BSDF *MatteMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
             bsdf->Add(BSDF_ALLOC(arena, OrenNayar)(r, sig));
     }
     return bsdf;
+
 }
 
-
-MatteMaterial *CreateMatteMaterial(const Transform &xform,
+Material *CreateMatteMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.5f));
     Reference<Texture<float> > sigma = mp.GetFloatTexture("sigma", 0.f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new MatteMaterial(Kd, sigma, bumpMap);
+    return new Material(std::bind(matte, Kd, sigma, bumpMap, _1, _2, _3));
 }
-
-

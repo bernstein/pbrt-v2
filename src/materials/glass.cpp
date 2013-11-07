@@ -39,10 +39,17 @@
 #include "texture.h"
 
 // GlassMaterial Method Definitions
-BSDF *GlassMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF* glass(Reference<Texture<Spectrum> > Kr,
+            Reference<Texture<Spectrum> > Kt,
+            Reference<Texture<float> > index,
+            Reference<Texture<float> > bumpMap,
+            const DifferentialGeometry& dgGeom,
+            const DifferentialGeometry &dgShading,
+            MemoryArena &arena)
+{
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     float ior = index->Evaluate(dgs);
@@ -57,14 +64,12 @@ BSDF *GlassMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const Different
     return bsdf;
 }
 
-
-GlassMaterial *CreateGlassMaterial(const Transform &xform,
+Material *CreateGlassMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<Spectrum> > Kt = mp.GetSpectrumTexture("Kt", Spectrum(1.f));
     Reference<Texture<float> > index = mp.GetFloatTexture("index", 1.5f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new GlassMaterial(Kr, Kt, index, bumpMap);
+    return new Material(std::bind(glass, Kr, Kt, index, bumpMap, _1, _2, _3));
 }
-
-

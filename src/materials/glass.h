@@ -40,27 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-// GlassMaterial Declarations
-class GlassMaterial : public Material {
-public:
-    // GlassMaterial Public Methods
-    GlassMaterial(Reference<Texture<Spectrum> > r, Reference<Texture<Spectrum> > t,
-            Reference<Texture<float> > i, Reference<Texture<float> > bump) {
-        Kr = r;
-        Kt = t;
-        index = i;
-        bumpMap = bump;
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
-private:
-    // GlassMaterial Private Data
-    Reference<Texture<Spectrum> > Kr, Kt;
-    Reference<Texture<float> > index;
-    Reference<Texture<float> > bumpMap;
-};
-
-
-GlassMaterial *CreateGlassMaterial(const Transform &xform,
-        const TextureParams &mp);
+Material* CreateGlassMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_GLASS_H

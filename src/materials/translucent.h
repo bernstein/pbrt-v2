@@ -40,34 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-// TranslucentMaterial Declarations
-class TranslucentMaterial : public Material {
-public:
-    // TranslucentMaterial Public Methods
-    TranslucentMaterial(Reference<Texture<Spectrum> > kd, Reference<Texture<Spectrum> > ks,
-            Reference<Texture<float> > rough,
-            Reference<Texture<Spectrum> > refl,
-            Reference<Texture<Spectrum> > trans,
-            Reference<Texture<float> > bump) {
-        Kd = kd;
-        Ks = ks;
-        roughness = rough;
-        reflect = refl;
-        transmit = trans;
-        bumpMap = bump;
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const
-        DifferentialGeometry &dgShading, MemoryArena &arena) const;
-private:
-    // TranslucentMaterial Private Data
-    Reference<Texture<Spectrum> > Kd, Ks;
-    Reference<Texture<float> > roughness;
-    Reference<Texture<Spectrum> > reflect, transmit;
-    Reference<Texture<float> > bumpMap;
-};
-
-
-TranslucentMaterial *CreateTranslucentMaterial(const Transform &xform,
+Material *CreateTranslucentMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_TRANSLUCENT_H

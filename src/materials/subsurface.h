@@ -40,37 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-// SubsurfaceMaterial Declarations
-class SubsurfaceMaterial : public Material {
-public:
-    // SubsurfaceMaterial Public Methods
-    SubsurfaceMaterial(float sc, Reference<Texture<Spectrum> > kr,
-            Reference<Texture<Spectrum> > sa,
-            Reference<Texture<Spectrum> > sps,
-            Reference<Texture<float> > e,
-            Reference<Texture<float> > bump) {
-        scale = sc;
-        Kr = kr;
-        sigma_a = sa;
-        sigma_prime_s = sps;
-        eta = e;
-        bumpMap = bump;
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
-                  const DifferentialGeometry &dgShading,
-                  MemoryArena &arena) const;
-    BSSRDF *GetBSSRDF(const DifferentialGeometry &dgGeom,
-                      const DifferentialGeometry &dgShading,
-                      MemoryArena &arena) const;
-private:
-    // SubsurfaceMaterial Private Data
-    float scale;
-    Reference<Texture<Spectrum> > Kr, sigma_a, sigma_prime_s;
-    Reference<Texture<float> > eta, bumpMap;
-};
-
-
-SubsurfaceMaterial *CreateSubsurfaceMaterial(const Transform &xform,
+Material *CreateSubsurfaceMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_SUBSURFACE_H

@@ -41,12 +41,17 @@
 #include "paramset.h"
 
 // SubsurfaceMaterial Method Definitions
-BSDF *SubsurfaceMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-        const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF*
+subsurfaceGetBSDF(Reference<Texture<Spectrum> > Kr,
+                  Reference<Texture<float> > eta,
+                  Reference<Texture<float> > bumpMap,
+                  const DifferentialGeometry &dgGeom,
+                  const DifferentialGeometry &dgShading, MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -58,17 +63,22 @@ BSDF *SubsurfaceMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
     return bsdf;
 }
 
-
-BSSRDF *SubsurfaceMaterial::GetBSSRDF(const DifferentialGeometry &dgGeom,
-        const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSSRDF*
+subsurfaceGetBSSRDF(float scale,
+                    Reference<Texture<Spectrum> > sigma_a,
+                    Reference<Texture<Spectrum> > sigma_prime_s,
+                    Reference<Texture<float> > eta,
+                    const DifferentialGeometry &dgGeom,
+                    const DifferentialGeometry &dgShading, MemoryArena &arena)
+{
     float e = eta->Evaluate(dgShading);
     return BSDF_ALLOC(arena, BSSRDF)(scale * sigma_a->Evaluate(dgShading),
         scale * sigma_prime_s->Evaluate(dgShading), e);
 }
 
-
-SubsurfaceMaterial *CreateSubsurfaceMaterial(const Transform &xform,
+Material* CreateSubsurfaceMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     float sa_rgb[3] = { .0011f, .0024f, .014f }, sps_rgb[3] = { 2.55f, 3.21f, 3.77f };
     Spectrum sa = Spectrum::FromRGB(sa_rgb), sps = Spectrum::FromRGB(sps_rgb);
     string name = mp.FindString("name");
@@ -83,7 +93,8 @@ SubsurfaceMaterial *CreateSubsurfaceMaterial(const Transform &xform,
     Reference<Texture<float> > ior = mp.GetFloatTexture("index", 1.3f);
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new SubsurfaceMaterial(scale, Kr, sigma_a, sigma_prime_s, ior, bumpMap);
+    return new Material(
+        std::bind(subsurfaceGetBSDF, Kr, ior, bumpMap, _1, _2, _3),
+        std::bind(subsurfaceGetBSSRDF, scale, sigma_a, sigma_prime_s, ior, _1, _2, _3)
+        );
 }
-
-

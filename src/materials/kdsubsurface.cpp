@@ -41,13 +41,20 @@
 #include "paramset.h"
 
 // KdSubsurfaceMaterial Method Definitions
-BSDF *KdSubsurfaceMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-              const DifferentialGeometry &dgShading,
-              MemoryArena &arena) const {
+BSDF*
+KdSubsurfaceGetBSDF(Reference<Texture<Spectrum> > Kd,
+                    Reference<Texture<Spectrum> > Kr,
+                    Reference<Texture<float> > meanfreepath,
+                    Reference<Texture<float> > eta,
+                    Reference<Texture<float> > bumpMap,
+                    const DifferentialGeometry &dgGeom,
+                    const DifferentialGeometry &dgShading,
+                    MemoryArena &arena)
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -59,10 +66,16 @@ BSDF *KdSubsurfaceMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
     return bsdf;
 }
 
-
-BSSRDF *KdSubsurfaceMaterial::GetBSSRDF(const DifferentialGeometry &dgGeom,
-              const DifferentialGeometry &dgShading,
-              MemoryArena &arena) const {
+BSSRDF*
+KdSubsurfaceGetBSSRDF(Reference<Texture<Spectrum> > Kd,
+                      Reference<Texture<Spectrum> > Kr,
+                      Reference<Texture<float> > meanfreepath,
+                      Reference<Texture<float> > eta,
+                      Reference<Texture<float> > bumpMap,
+                      const DifferentialGeometry &dgGeom,
+                      const DifferentialGeometry &dgShading,
+                      MemoryArena &arena)
+{
     float e = eta->Evaluate(dgShading);
     float mfp = meanfreepath->Evaluate(dgShading);
     Spectrum kd = Kd->Evaluate(dgShading).Clamp();
@@ -71,16 +84,16 @@ BSSRDF *KdSubsurfaceMaterial::GetBSSRDF(const DifferentialGeometry &dgGeom,
     return BSDF_ALLOC(arena, BSSRDF)(sigma_a, sigma_prime_s, e);
 }
 
-
-KdSubsurfaceMaterial *CreateKdSubsurfaceMaterial(const Transform &xform,
+Material* CreateKdSubsurfaceMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     float Kd[3] = { .5, .5, .5 };
     Reference<Texture<Spectrum> > kd = mp.GetSpectrumTexture("Kd", Spectrum::FromRGB(Kd));
     Reference<Texture<float> > mfp = mp.GetFloatTexture("meanfreepath", 1.f);
     Reference<Texture<float> > ior = mp.GetFloatTexture("index", 1.3f);
     Reference<Texture<Spectrum> > kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new KdSubsurfaceMaterial(kd, kr, mfp, ior, bumpMap);
+    return new Material(
+        std::bind(KdSubsurfaceGetBSDF,kd, kr, mfp, ior, bumpMap, _1, _2, _3),
+        std::bind(KdSubsurfaceGetBSSRDF,kd, kr, mfp, ior, bumpMap, _1, _2, _3));
 }
-
-

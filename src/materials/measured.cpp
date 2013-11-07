@@ -31,6 +31,7 @@
 
 
 // materials/measured.cpp*
+#include <stdexcept>
 #include "stdafx.h"
 #include "materials/measured.h"
 #include "paramset.h"
@@ -82,26 +83,56 @@
 // MeasuredMaterial Method Definitions
 static map<string, float *> loadedRegularHalfangle;
 static map<string, KdTree<IrregIsotropicBRDFSample> *> loadedThetaPhi;
-MeasuredMaterial::MeasuredMaterial(const string &filename,
-      Reference<Texture<float> > bump) {
-    bumpMap = bump;
+
+BSDF* measured(
+    KdTree<IrregIsotropicBRDFSample> *thetaPhiData,
+    float *regularHalfangleData,
+    uint32_t nThetaH,
+    uint32_t nThetaD,
+    uint32_t nPhiD,
+    Reference<Texture<float> > bumpMap,
+    const DifferentialGeometry &dgGeom,
+    const DifferentialGeometry &dgShading,
+    MemoryArena &arena)
+{
+    // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
+    DifferentialGeometry dgs;
+    if (bumpMap)
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
+    else
+        dgs = dgShading;
+    BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
+    if (regularHalfangleData)
+        bsdf->Add(BSDF_ALLOC(arena, RegularHalfangleBRDF)
+            (regularHalfangleData, nThetaH, nThetaD, nPhiD));
+    else if (thetaPhiData)
+        bsdf->Add(BSDF_ALLOC(arena, IrregIsotropicBRDF)(thetaPhiData));
+    return bsdf;
+}
+
+std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&, MemoryArena&)>
+makeMeasure(const string &filename, Reference<Texture<float> > bump) {
+
+    using namespace std::placeholders;
+    KdTree<IrregIsotropicBRDFSample>* m_thetaPhiData = NULL;
+    float *m_regularHalfangleData = NULL;
+    uint32_t m_nThetaH, m_nThetaD, m_nPhiD;
+
     const char *suffix = strrchr(filename.c_str(), '.');
-    regularHalfangleData = NULL;
-    thetaPhiData = NULL;
     if (!suffix)
         Error("No suffix in measured BRDF filename \"%s\".  "
               "Can't determine file type (.brdf / .merl)", filename.c_str());
     else if (!strcmp(suffix, ".brdf") || !strcmp(suffix, ".BRDF")) {
         // Load $(\theta, \phi)$ measured BRDF data
         if (loadedThetaPhi.find(filename) != loadedThetaPhi.end()) {
-            thetaPhiData = loadedThetaPhi[filename];
-            return;
+            m_thetaPhiData = loadedThetaPhi[filename];
+            throw std::runtime_error("Can't determine file type");
         }
         
         vector<float> values;
         if (!ReadFloatFile(filename.c_str(), &values)) {
             Error("Unable to read BRDF data from file \"%s\"", filename.c_str());
-            return;
+            throw std::runtime_error(std::string("Unable to read BRDF data from file ") + filename);
         }
         
         uint32_t pos = 0;
@@ -109,7 +140,8 @@ MeasuredMaterial::MeasuredMaterial(const string &filename,
         if ((values.size() - 1 - numWls) % (4 + numWls) != 0) {
             Error("Excess or insufficient data in theta, phi BRDF file \"%s\"",
                   filename.c_str());
-            return;
+            throw std::runtime_error(std::string("Excess or insufficient data in theta, phi BRDF file ")
+                + filename);
         }
 
         vector<float> wls;
@@ -131,40 +163,41 @@ MeasuredMaterial::MeasuredMaterial(const string &filename,
             samples.push_back(IrregIsotropicBRDFSample(p, s));
             bbox = Union(bbox, p);
         }
-        loadedThetaPhi[filename] = thetaPhiData = new KdTree<IrregIsotropicBRDFSample>(samples);
+        loadedThetaPhi[filename] = m_thetaPhiData = new KdTree<IrregIsotropicBRDFSample>(samples);
     }
     else {
         // Load RegularHalfangle BRDF Data
-        nThetaH = 90;
-        nThetaD = 90;
-        nPhiD = 180;
+        m_nThetaH = 90;
+        m_nThetaD = 90;
+        m_nPhiD = 180;
         
         if (loadedRegularHalfangle.find(filename) != loadedRegularHalfangle.end()) {
-            regularHalfangleData = loadedRegularHalfangle[filename];
-            return;
+            m_regularHalfangleData = loadedRegularHalfangle[filename];
+            throw std::runtime_error("could not find loadedRegularHalfangle");
         }
         
         FILE *f = fopen(filename.c_str(), "rb");
         if (!f) {
             Error("Unable to open BRDF data file \"%s\"", filename.c_str());
-            return;
+            throw std::runtime_error(std::string("Unable to open BRDF data file ") + filename);
+
         }
         int dims[3];
         if (fread(dims, sizeof(int), 3, f) != 3) {
             Error("Premature end-of-file in measured BRDF data file \"%s\"",
                   filename.c_str());
             fclose(f);
-            return;
+            throw std::runtime_error(std::string("Premature end-of-file in measured BRDF data file ") + filename);
         }
         uint32_t n = dims[0] * dims[1] * dims[2];
-        if (n != nThetaH * nThetaD * nPhiD)  {
+        if (n != m_nThetaH * m_nThetaD * m_nPhiD)  {
             Error("Dimensions don't match\n");
             fclose(f);
-            return;
+            throw std::runtime_error("Dimensions don't match");
         }
         
-        regularHalfangleData = new float[3*n];
-        const uint32_t chunkSize = 2*nPhiD;
+        m_regularHalfangleData = new float[3*n];
+        const uint32_t chunkSize = 2*m_nPhiD;
         double *tmp = ALLOCA(double, chunkSize);
         uint32_t nChunks = n / chunkSize;
         Assert((n % chunkSize) == 0);
@@ -175,45 +208,25 @@ MeasuredMaterial::MeasuredMaterial(const string &filename,
                 if (fread(tmp, sizeof(double), chunkSize, f) != chunkSize) {
                     Error("Premature end-of-file in measured BRDF data file \"%s\"",
                           filename.c_str());
-                    delete[] regularHalfangleData;
-                    regularHalfangleData = NULL;
+                    delete[] m_regularHalfangleData;
+                    m_regularHalfangleData = NULL;
                     fclose(f);
-                    return;
+                    throw std::runtime_error(std::string("Premature end-of-file in measured BRDF data file ") +
+                          filename);
                 }
                 for (uint32_t j = 0; j < chunkSize; ++j)
-                    regularHalfangleData[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
+                    m_regularHalfangleData[3 * offset++ + c] = max(0., tmp[j] * scales[c]);
             }
         }
-        
-        loadedRegularHalfangle[filename] = regularHalfangleData;
+
+        loadedRegularHalfangle[filename] = m_regularHalfangleData;
         fclose(f);
     }
+    return std::bind(measured, m_thetaPhiData, m_regularHalfangleData, m_nThetaH, m_nThetaD, m_nPhiD, bump, _1, _2, _3);
 }
 
-
-BSDF *MeasuredMaterial::GetBSDF(const DifferentialGeometry &dgGeom,
-                                const DifferentialGeometry &dgShading,
-                                MemoryArena &arena) const {
-    // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
-    DifferentialGeometry dgs;
-    if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
-    else
-        dgs = dgShading;
-    BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
-    if (regularHalfangleData)
-        bsdf->Add(BSDF_ALLOC(arena, RegularHalfangleBRDF)
-            (regularHalfangleData, nThetaH, nThetaD, nPhiD));
-    else if (thetaPhiData)
-        bsdf->Add(BSDF_ALLOC(arena, IrregIsotropicBRDF)(thetaPhiData));
-    return bsdf;
-}
-
-
-MeasuredMaterial *CreateMeasuredMaterial(const Transform &xform,
+Material* CreateMeasuredMaterial(const Transform &xform,
         const TextureParams &mp) {
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new MeasuredMaterial(mp.FindFilename("filename"), bumpMap);
+    return new Material(makeMeasure(mp.FindFilename("filename"), bumpMap));
 }
-
-

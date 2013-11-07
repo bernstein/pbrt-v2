@@ -40,29 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-// SubstrateMaterial Declarations
-class SubstrateMaterial : public Material {
-public:
-    // SubstrateMaterial Public Methods
-    SubstrateMaterial(Reference<Texture<Spectrum> > kd, Reference<Texture<Spectrum> > ks,
-            Reference<Texture<float> > u, Reference<Texture<float> > v,
-            Reference<Texture<float> > bump) {
-        Kd = kd;
-        Ks = ks;
-        nu = u;
-        nv = v;
-        bumpMap = bump;
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
-private:
-    // SubstrateMaterial Private Data
-    Reference<Texture<Spectrum> > Kd, Ks;
-    Reference<Texture<float> > nu, nv;
-    Reference<Texture<float> > bumpMap;
-};
-
-
-SubstrateMaterial *CreateSubstrateMaterial(const Transform &xform,
+Material *CreateSubstrateMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_SUBSTRATE_H

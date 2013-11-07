@@ -40,23 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-// MirrorMaterial Declarations
-class MirrorMaterial : public Material {
-public:
-    // MirrorMaterial Public Methods
-    MirrorMaterial(Reference<Texture<Spectrum> > r, Reference<Texture<float> > bump) {
-        Kr = r;
-        bumpMap = bump;
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
-private:
-    // MirrorMaterial Private Data
-    Reference<Texture<Spectrum> > Kr;
-    Reference<Texture<float> > bumpMap;
-};
-
-
-MirrorMaterial *CreateMirrorMaterial(const Transform &xform,
-        const TextureParams &mp);
+Material* CreateMirrorMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_MIRROR_H

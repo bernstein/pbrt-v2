@@ -42,24 +42,7 @@
 #include "reflection.h"
 #include "kdtree.h"
 
-// MeasuredMaterial Declarations
-class MeasuredMaterial : public Material {
-public:
-    // MeasuredMaterial Public Methods
-    MeasuredMaterial(const string &filename, Reference<Texture<float> > bump);
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom,
-                  const DifferentialGeometry &dgShading,
-                  MemoryArena &arena) const;
-private:
-    // MeasuredMaterial Private Data
-    KdTree<IrregIsotropicBRDFSample> *thetaPhiData;
-    float *regularHalfangleData;
-    uint32_t nThetaH, nThetaD, nPhiD;
-    Reference<Texture<float> > bumpMap;
-};
-
-
-MeasuredMaterial *CreateMeasuredMaterial(const Transform &xform,
+Material* CreateMeasuredMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_MEASURED_H

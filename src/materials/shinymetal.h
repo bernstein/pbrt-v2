@@ -39,27 +39,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-// ShinyMetalMaterial Class Declarations
-class ShinyMetalMaterial : public Material {
-public:
-    // ShinyMetalMaterial Public Methods
-    ShinyMetalMaterial(const Reference<Texture<Spectrum> > &ks, 
-                       const Reference<Texture<float> > &rough,
-                       const Reference<Texture<Spectrum> > &kr,
-                       const Reference<Texture<float> > &bump) 
-        : Ks(ks), Kr(kr), roughness(rough), bumpMap(bump) {
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom, 
-                  const DifferentialGeometry &dgShading,
-                  MemoryArena &arena) const;
-private:
-    // ShinyMetalMaterial Private Data
-    Reference<Texture<Spectrum> > Ks, Kr;
-    Reference<Texture<float> > roughness;
-    Reference<Texture<float> > bumpMap;
-};
-
-ShinyMetalMaterial *CreateShinyMetalMaterial(const Transform &xform,
+Material *CreateShinyMetalMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_SHINYMETAL_H

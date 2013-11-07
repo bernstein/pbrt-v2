@@ -40,35 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-// UberMaterial Declarations
-class UberMaterial : public Material {
-public:
-    UberMaterial(Reference<Texture<Spectrum> > kd,
-        Reference<Texture<Spectrum> > ks,
-        Reference<Texture<Spectrum> > kr,
-        Reference<Texture<Spectrum> > kt,
-        Reference<Texture<float> > rough,
-        Reference<Texture<Spectrum> > op,
-        Reference<Texture<float> > e,
-        Reference<Texture<float> > bump) {
-        Kd = kd;
-        Ks = ks;
-        Kr = kr;
-        Kt = kt;
-        roughness = rough;
-        opacity = op;
-        eta = e;
-        bumpMap = bump;
-    }
-    BSDF *GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const;
-private:
-    // UberMaterial Private Data
-    Reference<Texture<Spectrum> > Kd, Ks, Kr, Kt, opacity;
-    Reference<Texture<float> > roughness, eta, bumpMap;
-};
-
-
-UberMaterial *CreateUberMaterial(const Transform &xform,
-        const TextureParams &mp);
+Material *CreateUberMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_UBER_H

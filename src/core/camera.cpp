@@ -38,15 +38,12 @@
 #include "sampler.h"
 
 // Camera Method Definitions
-Camera::~Camera() {
-    delete film;
-}
-
 
 Camera::Camera(const AnimatedTransform &cam2world,
                float sopen, float sclose, Film *f)
-    : CameraToWorld(cam2world), shutterOpen(sopen), shutterClose(sclose) {
-    film = f;
+    : CameraToWorld(cam2world), shutterOpen(sopen), shutterClose(sclose) 
+    , film(f)
+{
     if (CameraToWorld.HasScale())
         Warning("Scaling detected in world-to-camera transformation!\n"
                 "The system has numerous assumptions, implicit and explicit,\n"
@@ -100,5 +97,3 @@ ProjectiveCamera::ProjectiveCamera(const AnimatedTransform &cam2world,
     RasterToScreen = Inverse(ScreenToRaster);
     RasterToCamera = Inverse(CameraToScreen) * RasterToScreen;
 }
-
-

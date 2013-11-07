@@ -39,11 +39,22 @@
 #include "paramset.h"
 
 // UberMaterial Method Definitions
-BSDF *UberMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const DifferentialGeometry &dgShading, MemoryArena &arena) const {
+BSDF* uber( Reference<Texture<Spectrum> > Kd,
+            Reference<Texture<Spectrum> > Ks,
+            Reference<Texture<Spectrum> > Kr,
+            Reference<Texture<Spectrum> > Kt,
+            Reference<Texture<float> > roughness,
+            Reference<Texture<Spectrum> > opacity,
+            Reference<Texture<float> > eta,
+            Reference<Texture<float> > bumpMap,
+            const DifferentialGeometry &dgGeom,
+            const DifferentialGeometry &dgShading,
+            MemoryArena &arena) 
+{
     // Allocate _BSDF_, possibly doing bump mapping with _bumpMap_
     DifferentialGeometry dgs;
     if (bumpMap)
-        Bump(bumpMap, dgGeom, dgShading, &dgs);
+        Material::Bump(bumpMap, dgGeom, dgShading, &dgs);
     else
         dgs = dgShading;
     BSDF *bsdf = BSDF_ALLOC(arena, BSDF)(dgs, dgGeom.nn);
@@ -82,9 +93,9 @@ BSDF *UberMaterial::GetBSDF(const DifferentialGeometry &dgGeom, const Differenti
     return bsdf;
 }
 
-
-UberMaterial *CreateUberMaterial(const Transform &xform,
+Material* CreateUberMaterial(const Transform &xform,
         const TextureParams &mp) {
+    using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(0.25f));
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(0.f));
@@ -93,7 +104,5 @@ UberMaterial *CreateUberMaterial(const Transform &xform,
     Reference<Texture<float> > eta = mp.GetFloatTexture("index", 1.5f);
     Reference<Texture<Spectrum> > opacity = mp.GetSpectrumTexture("opacity", 1.f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new UberMaterial(Kd, Ks, Kr, Kt, roughness, opacity, eta, bumpMap);
+    return new Material(std::bind(uber, Kd, Ks, Kr, Kt, roughness, opacity, eta, bumpMap, _1, _2, _3));
 }
-
-
