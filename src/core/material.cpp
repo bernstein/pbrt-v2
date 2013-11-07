@@ -29,7 +29,6 @@
 
  */
 
-
 // core/material.cpp*
 #include "stdafx.h"
 #include "material.h"
@@ -37,11 +36,6 @@
 #include "texture.h"
 #include "spectrum.h"
 #include "reflection.h"
-
-// Material Method Definitions
-Material::~Material() {
-}
-
 
 void Material::Bump(const Reference<Texture<float> > &d,
                     const DifferentialGeometry &dgGeom,
@@ -83,5 +77,4 @@ void Material::Bump(const Reference<Texture<float> > &d,
     // Orient shading normal to match geometric normal
     dgBump->nn = Faceforward(dgBump->nn, dgGeom.nn);
 }
-
 

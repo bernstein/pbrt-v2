@@ -39,6 +39,7 @@
 // core/material.h*
 #include "pbrt.h"
 #include "memory.h"
+#include <functional>
 
 // Material Declarations
 class Material : public ReferenceCounted {
@@ -52,9 +53,11 @@ public:
                               MemoryArena &arena) const {
         return NULL;
     }
-    virtual ~Material();
+    virtual ~Material() {}
     static void Bump(const Reference<Texture<float> > &d, const DifferentialGeometry &dgGeom,
         const DifferentialGeometry &dgShading, DifferentialGeometry *dgBump);
+    std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&,
+                          MemoryArena&)> getBSDF;
 };
 
 
