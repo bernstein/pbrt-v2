@@ -125,7 +125,8 @@ void SurfacePointsRenderer::Render(const Scene &scene) {
     Transform WorldToObject(Inverse(ObjectToWorld));
     Reference<Shape> sph = new Sphere(&ObjectToWorld, &WorldToObject,
         true, sceneRadius, -sceneRadius, sceneRadius, 360.f);
-    Reference<Material> nullMaterial = Reference<Material>(NULL);
+    //Reference<Material> nullMaterial = Reference<Material>(NULL);
+    Material nullMaterial;
     GeometricPrimitive sphere(sph, nullMaterial, NULL);
     int maxFails = 2000, repeatedFails = 0, maxRepeatedFails = 0;
     if (PbrtOptions.quickRender) maxFails = max(10, maxFails / 10);

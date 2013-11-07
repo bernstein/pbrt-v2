@@ -77,7 +77,7 @@ public:
     boost::optional<Intersection> Intersect(const Ray &r) const override;
     virtual bool IntersectP(const Ray &r) const override;
     GeometricPrimitive(const Reference<Shape> &s,
-                       const Reference<Material> &m, AreaLight *a);
+                       const Material& m, AreaLight *a);
     const AreaLight *GetAreaLight() const override;
     BSDF *GetBSDF(const DifferentialGeometry &dg,
                   const Transform &ObjectToWorld, MemoryArena &arena) const override;
@@ -86,7 +86,7 @@ public:
 private:
     // GeometricPrimitive Private Data
     Reference<Shape> shape;
-    Reference<Material> material;
+    Material material;
     AreaLight *areaLight;
 };
 

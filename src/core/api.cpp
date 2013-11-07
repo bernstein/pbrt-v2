@@ -1006,7 +1006,7 @@ void pbrtShape(const string &name, const ParamSet &params) {
             area = MakeAreaLight(graphicsState.areaLight, curTransform[0],
                                  graphicsState.areaLightParams, shape);
         }
-        prim = new GeometricPrimitive(shape, mtl, area);
+        prim = new GeometricPrimitive(shape, *(mtl.GetPtr()), area);
     } else {
         // Create primitive for animated shape
 
@@ -1030,7 +1030,7 @@ void pbrtShape(const string &name, const ParamSet &params) {
         AnimatedTransform
              animatedWorldToObject(world2obj[0], renderOptions->transformStartTime,
                                    world2obj[1], renderOptions->transformEndTime);
-        Reference<Primitive> baseprim = new GeometricPrimitive(shape, mtl, NULL);
+        Reference<Primitive> baseprim = new GeometricPrimitive(shape, *(mtl.GetPtr()), NULL);
         if (!baseprim->CanIntersect()) {
             // Refine animated shape and create BVH if more than one shape created
             vector<Reference<Primitive> > refinedPrimitives;

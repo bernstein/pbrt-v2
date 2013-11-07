@@ -145,7 +145,7 @@ void GeometricPrimitive::
 
 
 GeometricPrimitive::GeometricPrimitive(const Reference<Shape> &s,
-        const Reference<Material> &m, AreaLight *a)
+        const Material& m, AreaLight *a)
     : shape(s), material(m), areaLight(a) {
 }
 
@@ -177,7 +177,7 @@ BSDF *GeometricPrimitive::GetBSDF(const DifferentialGeometry &dg,
                                   MemoryArena &arena) const {
     DifferentialGeometry dgs;
     shape->GetShadingGeometry(ObjectToWorld, dg, &dgs);
-    return material->GetBSDF(dg, dgs, arena);
+    return material.GetBSDF(dg, dgs, arena);
 }
 
 
@@ -186,7 +186,7 @@ BSSRDF *GeometricPrimitive::GetBSSRDF(const DifferentialGeometry &dg,
                                   MemoryArena &arena) const {
     DifferentialGeometry dgs;
     shape->GetShadingGeometry(ObjectToWorld, dg, &dgs);
-    return material->GetBSSRDF(dg, dgs, arena);
+    return material.GetBSSRDF(dg, dgs, arena);
 }
 
 

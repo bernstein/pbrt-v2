@@ -159,7 +159,8 @@ void CreateRadianceProbes::Render(const Scene &scene) {
     Transform WorldToObject(Inverse(ObjectToWorld));
     Reference<Shape> sph = new Sphere(&ObjectToWorld, &WorldToObject,
         true, sceneRadius, -sceneRadius, sceneRadius, 360.f);
-    Reference<Material> nullMaterial = Reference<Material>(NULL);
+    //Reference<Material> nullMaterial = Reference<Material>(NULL);
+    Material nullMaterial;
     GeometricPrimitive sphere(sph, nullMaterial, NULL);
     vector<Point> surfacePoints;
     uint32_t nPoints = 32768, maxDepth = 32;
