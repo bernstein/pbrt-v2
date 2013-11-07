@@ -47,7 +47,7 @@ public:
     // DiffuseAreaLight Public Methods
     DiffuseAreaLight(const Transform &light2world,
         const Spectrum &Le, int ns, const Reference<Shape> &shape);
-    ~DiffuseAreaLight();
+    ~DiffuseAreaLight() { delete shapeSet; }
     Spectrum L(const Point &p, const Normal &n, const Vector &w) const {
         return Dot(n, w) > 0.f ? Lemit : 0.f;
     }

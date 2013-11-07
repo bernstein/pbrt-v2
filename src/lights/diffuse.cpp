@@ -36,12 +36,6 @@
 #include "paramset.h"
 #include "montecarlo.h"
 
-// DiffuseAreaLight Method Definitions
-DiffuseAreaLight::~DiffuseAreaLight() {
-    delete shapeSet;
-}
-
-
 DiffuseAreaLight::DiffuseAreaLight(const Transform &light2world,
         const Spectrum &le, int ns, const Reference<Shape> &s)
     : AreaLight(light2world, ns) {
