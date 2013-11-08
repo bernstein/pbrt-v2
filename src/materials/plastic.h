@@ -40,7 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material* CreatePlasticMaterial(const Transform &xform,
-        const TextureParams &mp);
+Material CreatePlasticMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_PLASTIC_H

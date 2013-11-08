@@ -70,12 +70,12 @@ plastic(Reference<Texture<Spectrum> > Kd,
     return bsdf;
 }
 
-Material* CreatePlasticMaterial(const Transform &xform,
+Material CreatePlasticMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(0.25f));
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(plastic, Kd, Ks, roughness, bumpMap, _1, _2, _3));
+    return Material(std::bind(plastic, Kd, Ks, roughness, bumpMap, _1, _2, _3));
 }

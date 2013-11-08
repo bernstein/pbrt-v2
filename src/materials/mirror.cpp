@@ -59,12 +59,12 @@ BSDF* mirror(Reference<Texture<Spectrum> > Kr,
     return bsdf;
 }
 
-Material* CreateMirrorMaterial(const Transform &xform,
+Material CreateMirrorMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(0.9f));
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(mirror, Kr, bumpMap, _1, _2, _3));
+    return Material(std::bind(mirror, Kr, bumpMap, _1, _2, _3));
 }
 
 

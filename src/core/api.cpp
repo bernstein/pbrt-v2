@@ -358,10 +358,9 @@ Reference<Shape> MakeShape(const string &name,
 }
 
 
-Reference<Material> MakeMaterial(const string &name,
-        const Transform &mtl2world,
+Material MakeMaterial(const string& name, const Transform& mtl2world,
         const TextureParams &mp) {
-    Material *material = NULL;
+    Material material;
     if (name == "matte")
         material = CreateMatteMaterial(mtl2world, mp);
     else if (name == "plastic")
@@ -396,7 +395,7 @@ Reference<Material> MakeMaterial(const string &name,
     else
         Warning("Material \"%s\" unknown.", name.c_str());
     mp.ReportUnused();
-    if (!material) Error("Unable to create material \"%s\"", name.c_str());
+    //if (!material) Error("Unable to create material \"%s\"", name.c_str());
     return material;
 }
 
@@ -944,8 +943,8 @@ void pbrtMakeNamedMaterial(const string &name,
     WARN_IF_ANIMATED_TRANSFORM("MakeNamedMaterial");
     if (matName == "") Error("No parameter string \"type\" found in MakeNamedMaterial");
     else {
-        Reference<Material> mtl = MakeMaterial(matName, curTransform[0], mp);
-        if (mtl) graphicsState.namedMaterials[name] = *(mtl.GetPtr());
+        Material mtl = MakeMaterial(matName, curTransform[0], mp);
+        graphicsState.namedMaterials[name] = mtl;
     }
 }
 
@@ -1057,17 +1056,8 @@ Material GraphicsState::CreateMaterial(const ParamSet &params) {
         namedMaterials.find(currentNamedMaterial) != namedMaterials.end()) {
         mtl = namedMaterials[graphicsState.currentNamedMaterial];
     } else {
-        auto m = MakeMaterial(material, curTransform[0], mp);
-        mtl = *(m.GetPtr());
-    }
-    /*
-    if (!mtl)
         mtl = MakeMaterial(material, curTransform[0], mp);
-    if (!mtl)
-        mtl = MakeMaterial("matte", curTransform[0], mp);
-    if (!mtl)
-        Severe("Unable to create \"matte\" material?!");
-    */
+    }
     return mtl;
 }
 

@@ -93,7 +93,7 @@ BSDF* uber( Reference<Texture<Spectrum> > Kd,
     return bsdf;
 }
 
-Material* CreateUberMaterial(const Transform &xform,
+Material CreateUberMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
@@ -104,5 +104,5 @@ Material* CreateUberMaterial(const Transform &xform,
     Reference<Texture<float> > eta = mp.GetFloatTexture("index", 1.5f);
     Reference<Texture<Spectrum> > opacity = mp.GetSpectrumTexture("opacity", 1.f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(uber, Kd, Ks, Kr, Kt, roughness, opacity, eta, bumpMap, _1, _2, _3));
+    return Material(std::bind(uber, Kd, Ks, Kr, Kt, roughness, opacity, eta, bumpMap, _1, _2, _3));
 }

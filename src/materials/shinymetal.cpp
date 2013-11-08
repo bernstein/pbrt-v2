@@ -81,12 +81,12 @@ BSDF* shinyMetal(const Reference<Texture<Spectrum> > &Ks,
     return bsdf;
 }
 
-Material* CreateShinyMetalMaterial(const Transform &xform,
+Material CreateShinyMetalMaterial(const Transform &xform,
                                    const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<Spectrum> > Ks = mp.GetSpectrumTexture("Ks", Spectrum(1.f));
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(shinyMetal, Ks, roughness, Kr, bumpMap, _1, _2, _3));
+    return Material(std::bind(shinyMetal, Ks, roughness, Kr, bumpMap, _1, _2, _3));
 }

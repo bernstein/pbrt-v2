@@ -41,6 +41,6 @@
 #include "material.h"
 #include "spectrum.h"
 
-Material* CreateMetalMaterial(const Transform &xform, const TextureParams &mp);
+Material CreateMetalMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_METAL_H

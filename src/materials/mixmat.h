@@ -46,7 +46,7 @@ BSDF* mix(Material const& m1, Material const& m2,
           const DifferentialGeometry &dgShading,
           MemoryArena &arena);
 
-Material *CreateMixMaterial(const Transform &xform,
+Material CreateMixMaterial(const Transform &xform,
     const TextureParams &mp, const Material& m1, const Material& m2);
 
 #endif // PBRT_MATERIALS_MIXMAT_H

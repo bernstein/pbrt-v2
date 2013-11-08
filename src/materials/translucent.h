@@ -40,7 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material *CreateTranslucentMaterial(const Transform &xform,
+Material CreateTranslucentMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_TRANSLUCENT_H

@@ -84,7 +84,7 @@ KdSubsurfaceGetBSSRDF(Reference<Texture<Spectrum> > Kd,
     return BSDF_ALLOC(arena, BSSRDF)(sigma_a, sigma_prime_s, e);
 }
 
-Material* CreateKdSubsurfaceMaterial(const Transform &xform,
+Material CreateKdSubsurfaceMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     float Kd[3] = { .5, .5, .5 };
@@ -93,7 +93,7 @@ Material* CreateKdSubsurfaceMaterial(const Transform &xform,
     Reference<Texture<float> > ior = mp.GetFloatTexture("index", 1.3f);
     Reference<Texture<Spectrum> > kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(
+    return Material(
         std::bind(KdSubsurfaceGetBSDF,kd, kr, mfp, ior, bumpMap, _1, _2, _3),
         std::bind(KdSubsurfaceGetBSSRDF,kd, kr, mfp, ior, bumpMap, _1, _2, _3));
 }

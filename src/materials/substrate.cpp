@@ -64,7 +64,7 @@ BSDF* substrate(
     return bsdf;
 }
 
-Material *CreateSubstrateMaterial(const Transform &xform,
+Material CreateSubstrateMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(.5f));
@@ -72,5 +72,5 @@ Material *CreateSubstrateMaterial(const Transform &xform,
     Reference<Texture<float> > uroughness = mp.GetFloatTexture("uroughness", .1f);
     Reference<Texture<float> > vroughness = mp.GetFloatTexture("vroughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(substrate, Kd, Ks, uroughness, vroughness, bumpMap, _1, _2, _3));
+    return Material(std::bind(substrate, Kd, Ks, uroughness, vroughness, bumpMap, _1, _2, _3));
 }

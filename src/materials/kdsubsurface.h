@@ -40,7 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material* CreateKdSubsurfaceMaterial(const Transform &xform,
+Material CreateKdSubsurfaceMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_KDSUBSURFACE_H

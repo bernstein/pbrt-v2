@@ -225,8 +225,8 @@ makeMeasure(const string &filename, Reference<Texture<float> > bump) {
     return std::bind(measured, m_thetaPhiData, m_regularHalfangleData, m_nThetaH, m_nThetaD, m_nPhiD, bump, _1, _2, _3);
 }
 
-Material* CreateMeasuredMaterial(const Transform &xform,
+Material CreateMeasuredMaterial(const Transform &xform,
         const TextureParams &mp) {
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(makeMeasure(mp.FindFilename("filename"), bumpMap));
+    return Material(makeMeasure(mp.FindFilename("filename"), bumpMap));
 }

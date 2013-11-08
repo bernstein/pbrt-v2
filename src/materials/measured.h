@@ -42,7 +42,7 @@
 #include "reflection.h"
 #include "kdtree.h"
 
-Material* CreateMeasuredMaterial(const Transform &xform,
+Material CreateMeasuredMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_MEASURED_H

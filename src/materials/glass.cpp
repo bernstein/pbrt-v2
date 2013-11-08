@@ -64,12 +64,12 @@ BSDF* glass(Reference<Texture<Spectrum> > Kr,
     return bsdf;
 }
 
-Material *CreateGlassMaterial(const Transform &xform,
+Material CreateGlassMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<Spectrum> > Kt = mp.GetSpectrumTexture("Kt", Spectrum(1.f));
     Reference<Texture<float> > index = mp.GetFloatTexture("index", 1.5f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(glass, Kr, Kt, index, bumpMap, _1, _2, _3));
+    return Material(std::bind(glass, Kr, Kt, index, bumpMap, _1, _2, _3));
 }

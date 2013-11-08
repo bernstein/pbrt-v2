@@ -76,7 +76,7 @@ subsurfaceGetBSSRDF(float scale,
         scale * sigma_prime_s->Evaluate(dgShading), e);
 }
 
-Material* CreateSubsurfaceMaterial(const Transform &xform,
+Material CreateSubsurfaceMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     float sa_rgb[3] = { .0011f, .0024f, .014f }, sps_rgb[3] = { 2.55f, 3.21f, 3.77f };
@@ -93,7 +93,7 @@ Material* CreateSubsurfaceMaterial(const Transform &xform,
     Reference<Texture<float> > ior = mp.GetFloatTexture("index", 1.3f);
     Reference<Texture<Spectrum> > Kr = mp.GetSpectrumTexture("Kr", Spectrum(1.f));
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(
+    return Material(
         std::bind(subsurfaceGetBSDF, Kr, ior, bumpMap, _1, _2, _3),
         std::bind(subsurfaceGetBSSRDF, scale, sigma_a, sigma_prime_s, ior, _1, _2, _3)
         );

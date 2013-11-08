@@ -65,11 +65,11 @@ BSDF* matte(Reference<Texture<Spectrum> > Kd,
 
 }
 
-Material *CreateMatteMaterial(const Transform &xform,
+Material CreateMatteMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.5f));
     Reference<Texture<float> > sigma = mp.GetFloatTexture("sigma", 0.f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(matte, Kd, sigma, bumpMap, _1, _2, _3));
+    return Material(std::bind(matte, Kd, sigma, bumpMap, _1, _2, _3));
 }

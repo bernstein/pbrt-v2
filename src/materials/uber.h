@@ -40,6 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material *CreateUberMaterial(const Transform &xform, const TextureParams &mp);
+Material CreateUberMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_UBER_H

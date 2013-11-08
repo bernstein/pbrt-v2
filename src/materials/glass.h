@@ -40,6 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material* CreateGlassMaterial(const Transform &xform, const TextureParams &mp);
+Material CreateGlassMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_GLASS_H

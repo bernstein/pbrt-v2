@@ -39,7 +39,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material *CreateShinyMetalMaterial(const Transform &xform,
+Material CreateShinyMetalMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_SHINYMETAL_H

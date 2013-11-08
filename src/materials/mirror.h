@@ -40,6 +40,6 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material* CreateMirrorMaterial(const Transform &xform, const TextureParams &mp);
+Material CreateMirrorMaterial(const Transform &xform, const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_MIRROR_H

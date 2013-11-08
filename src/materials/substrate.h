@@ -40,7 +40,7 @@
 #include "pbrt.h"
 #include "material.h"
 
-Material *CreateSubstrateMaterial(const Transform &xform,
+Material CreateSubstrateMaterial(const Transform &xform,
         const TextureParams &mp);
 
 #endif // PBRT_MATERIALS_SUBSTRATE_H

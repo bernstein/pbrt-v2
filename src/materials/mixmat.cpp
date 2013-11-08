@@ -58,13 +58,13 @@ BSDF* mix(const Material& m1, const Material& m2,
     return b1;
 }
 
-Material* CreateMixMaterial(const Transform &xform,
+Material CreateMixMaterial(const Transform &xform,
         const TextureParams &mp, const Material& m1,
         const Material& m2) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > scale = mp.GetSpectrumTexture("amount",
         Spectrum(0.5f));
-    return new Material(std::bind(mix, m1, m2, scale, _1, _2, _3));
+    return Material(std::bind(mix, m1, m2, scale, _1, _2, _3));
 }
 
 

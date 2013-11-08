@@ -82,7 +82,7 @@ BSDF* translucent(Reference<Texture<Spectrum> > Kd, Reference<Texture<Spectrum> 
     return bsdf;
 }
 
-Material *CreateTranslucentMaterial(const Transform &xform,
+Material CreateTranslucentMaterial(const Transform &xform,
         const TextureParams &mp) {
     using namespace std::placeholders;
     Reference<Texture<Spectrum> > Kd = mp.GetSpectrumTexture("Kd", Spectrum(0.25f));
@@ -91,5 +91,5 @@ Material *CreateTranslucentMaterial(const Transform &xform,
     Reference<Texture<Spectrum> > transmit = mp.GetSpectrumTexture("transmit", Spectrum(0.5f));
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .1f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(translucent, Kd, Ks, roughness, reflect, transmit, bumpMap, _1, _2, _3));
+    return Material(std::bind(translucent, Kd, Ks, roughness, reflect, transmit, bumpMap, _1, _2, _3));
 }

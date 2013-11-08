@@ -90,7 +90,7 @@ const float CopperK[CopperSamples] = {
     2.589625, 2.605, 2.595562, 2.583, 2.5765, 2.599, 2.678062, 2.809, 3.01075, 3.24, 3.458187, 3.67,
     3.863125, 4.05, 4.239563, 4.43, 4.619563, 4.817, 5.034125, 5.26, 5.485625, 5.717 };
 
-Material *CreateMetalMaterial(const Transform &xform, const TextureParams &mp) {
+Material CreateMetalMaterial(const Transform &xform, const TextureParams &mp) {
     using namespace std::placeholders;
     static Spectrum copperN = Spectrum::FromSampled(CopperWavelengths, CopperN, CopperSamples);
     Reference<Texture<Spectrum> > eta = mp.GetSpectrumTexture("eta", copperN);
@@ -100,7 +100,7 @@ Material *CreateMetalMaterial(const Transform &xform, const TextureParams &mp) {
 
     Reference<Texture<float> > roughness = mp.GetFloatTexture("roughness", .01f);
     Reference<Texture<float> > bumpMap = mp.GetFloatTextureOrNull("bumpmap");
-    return new Material(std::bind(Metal,eta, k, roughness, bumpMap, _1,_2,_3));
+    return Material(std::bind(Metal,eta, k, roughness, bumpMap, _1,_2,_3));
 }
 
 
