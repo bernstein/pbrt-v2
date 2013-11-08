@@ -214,14 +214,14 @@ RenderOptions::RenderOptions() {
 struct GraphicsState {
     // Graphics State Methods
     GraphicsState();
-    Reference<Material> CreateMaterial(const ParamSet &params);
+    Material CreateMaterial(const ParamSet &params);
 
     // Graphics State
     map<string, Reference<Texture<float> > > floatTextures;
     map<string, Reference<Texture<Spectrum> > > spectrumTextures;
     ParamSet materialParams;
     string material;
-    map<string, Reference<Material> > namedMaterials;
+    map<string, Material> namedMaterials;
     string currentNamedMaterial;
     ParamSet areaLightParams;
     string areaLight;
@@ -375,19 +375,8 @@ Reference<Material> MakeMaterial(const string &name,
     else if (name == "mix") {
         string m1 = mp.FindString("namedmaterial1", "");
         string m2 = mp.FindString("namedmaterial2", "");
-        Reference<Material> mat1 = graphicsState.namedMaterials[m1];
-        Reference<Material> mat2 = graphicsState.namedMaterials[m2];
-        if (!mat1) {
-            Error("Named material \"%s\" undefined.  Using \"matte\"",
-                  m1.c_str());
-            mat1 = MakeMaterial("matte", curTransform[0], mp);
-        }
-        if (!mat2) {
-            Error("Named material \"%s\" undefined.  Using \"matte\"",
-                  m2.c_str());
-            mat2 = MakeMaterial("matte", curTransform[0], mp);
-        }
-
+        Material mat1 = graphicsState.namedMaterials[m1];
+        Material mat2 = graphicsState.namedMaterials[m2];
         material = CreateMixMaterial(mtl2world, mp, mat1, mat2);
     }
     else if (name == "metal")
@@ -956,7 +945,7 @@ void pbrtMakeNamedMaterial(const string &name,
     if (matName == "") Error("No parameter string \"type\" found in MakeNamedMaterial");
     else {
         Reference<Material> mtl = MakeMaterial(matName, curTransform[0], mp);
-        if (mtl) graphicsState.namedMaterials[name] = mtl;
+        if (mtl) graphicsState.namedMaterials[name] = *(mtl.GetPtr());
     }
 }
 
@@ -998,7 +987,7 @@ void pbrtShape(const string &name, const ParamSet &params) {
         Reference<Shape> shape = MakeShape(name, obj2world, world2obj,
             graphicsState.reverseOrientation, params);
         if (!shape) return;
-        Reference<Material> mtl = graphicsState.CreateMaterial(params);
+        Material mtl = graphicsState.CreateMaterial(params);
         params.ReportUnused();
 
         // Possibly create area light for shape
@@ -1006,7 +995,7 @@ void pbrtShape(const string &name, const ParamSet &params) {
             area = MakeAreaLight(graphicsState.areaLight, curTransform[0],
                                  graphicsState.areaLightParams, shape);
         }
-        prim = new GeometricPrimitive(shape, *(mtl.GetPtr()), area);
+        prim = new GeometricPrimitive(shape, mtl, area);
     } else {
         // Create primitive for animated shape
 
@@ -1019,7 +1008,7 @@ void pbrtShape(const string &name, const ParamSet &params) {
         Reference<Shape> shape = MakeShape(name, identity, identity,
             graphicsState.reverseOrientation, params);
         if (!shape) return;
-        Reference<Material> mtl = graphicsState.CreateMaterial(params);
+        Material mtl = graphicsState.CreateMaterial(params);
         params.ReportUnused();
 
         // Get _animatedWorldToObject_ transform for shape
@@ -1030,7 +1019,7 @@ void pbrtShape(const string &name, const ParamSet &params) {
         AnimatedTransform
              animatedWorldToObject(world2obj[0], renderOptions->transformStartTime,
                                    world2obj[1], renderOptions->transformEndTime);
-        Reference<Primitive> baseprim = new GeometricPrimitive(shape, *(mtl.GetPtr()), NULL);
+        Reference<Primitive> baseprim = new GeometricPrimitive(shape, mtl, NULL);
         if (!baseprim->CanIntersect()) {
             // Refine animated shape and create BVH if more than one shape created
             vector<Reference<Primitive> > refinedPrimitives;
@@ -1059,20 +1048,26 @@ void pbrtShape(const string &name, const ParamSet &params) {
 }
 
 
-Reference<Material> GraphicsState::CreateMaterial(const ParamSet &params) {
+Material GraphicsState::CreateMaterial(const ParamSet &params) {
     TextureParams mp(params, materialParams,
                      floatTextures,
                      spectrumTextures);
-    Reference<Material> mtl;
+    Material mtl;
     if (currentNamedMaterial != "" &&
-        namedMaterials.find(currentNamedMaterial) != namedMaterials.end())
+        namedMaterials.find(currentNamedMaterial) != namedMaterials.end()) {
         mtl = namedMaterials[graphicsState.currentNamedMaterial];
+    } else {
+        auto m = MakeMaterial(material, curTransform[0], mp);
+        mtl = *(m.GetPtr());
+    }
+    /*
     if (!mtl)
         mtl = MakeMaterial(material, curTransform[0], mp);
     if (!mtl)
         mtl = MakeMaterial("matte", curTransform[0], mp);
     if (!mtl)
         Severe("Unable to create \"matte\" material?!");
+    */
     return mtl;
 }
 

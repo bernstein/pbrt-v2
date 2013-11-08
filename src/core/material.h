@@ -46,6 +46,13 @@ class Material : public ReferenceCounted {
 public:
     // Material Interface
     Material(const Material& m) : getBSDF(m.getBSDF), getBSSRDF(m.getBSSRDF) {}
+    Material& operator=(const Material& rhs) {
+      if (this != &rhs) {
+        getBSDF = rhs.getBSDF;
+        getBSSRDF = rhs.getBSSRDF;
+      }
+      return *this;
+    }
     Material() {
       getBSSRDF = [](const DifferentialGeometry&,const DifferentialGeometry&,
                      MemoryArena&) -> BSSRDF* {

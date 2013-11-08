@@ -40,14 +40,13 @@
 #include "pbrt.h"
 #include "material.h"
 
-BSDF* mix(Reference<Material> m1, Reference<Material> m2,
+BSDF* mix(Material const& m1, Material const& m2,
           Reference<Texture<Spectrum> > scale,
           const DifferentialGeometry &dgGeom,
           const DifferentialGeometry &dgShading,
           MemoryArena &arena);
 
 Material *CreateMixMaterial(const Transform &xform,
-    const TextureParams &mp, const Reference<Material> &m1,
-    const Reference<Material> &m2);
+    const TextureParams &mp, const Material& m1, const Material& m2);
 
 #endif // PBRT_MATERIALS_MIXMAT_H
