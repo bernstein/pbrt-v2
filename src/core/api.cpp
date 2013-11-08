@@ -358,45 +358,46 @@ Reference<Shape> MakeShape(const string &name,
 }
 
 
-Material MakeMaterial(const string& name, const Transform& mtl2world,
+boost::optional<Material> MakeMaterial(const string& name, const Transform& mtl2world,
         const TextureParams &mp) {
     Material material;
     if (name == "matte")
-        material = CreateMatteMaterial(mtl2world, mp);
+        return boost::make_optional(CreateMatteMaterial(mtl2world, mp));
     else if (name == "plastic")
-        material = CreatePlasticMaterial(mtl2world, mp);
+        return boost::make_optional(CreatePlasticMaterial(mtl2world, mp));
     else if (name == "translucent")
-        material = CreateTranslucentMaterial(mtl2world, mp);
+        return boost::make_optional(CreateTranslucentMaterial(mtl2world, mp));
     else if (name == "glass")
-        material = CreateGlassMaterial(mtl2world, mp);
+        return boost::make_optional(CreateGlassMaterial(mtl2world, mp));
     else if (name == "mirror")
-        material = CreateMirrorMaterial(mtl2world, mp);
+        return boost::make_optional(CreateMirrorMaterial(mtl2world, mp));
     else if (name == "mix") {
         string m1 = mp.FindString("namedmaterial1", "");
         string m2 = mp.FindString("namedmaterial2", "");
         Material mat1 = graphicsState.namedMaterials[m1];
         Material mat2 = graphicsState.namedMaterials[m2];
-        material = CreateMixMaterial(mtl2world, mp, mat1, mat2);
+        return boost::make_optional(CreateMixMaterial(mtl2world, mp, mat1, mat2));
     }
     else if (name == "metal")
-        material = CreateMetalMaterial(mtl2world, mp);
+        return boost::make_optional(CreateMetalMaterial(mtl2world, mp));
     else if (name == "substrate")
-        material = CreateSubstrateMaterial(mtl2world, mp);
+        return boost::make_optional(CreateSubstrateMaterial(mtl2world, mp));
     else if (name == "uber")
-        material = CreateUberMaterial(mtl2world, mp);
+        return boost::make_optional(CreateUberMaterial(mtl2world, mp));
     else if (name == "subsurface")
-        material = CreateSubsurfaceMaterial(mtl2world, mp);
+        return boost::make_optional(CreateSubsurfaceMaterial(mtl2world, mp));
     else if (name == "kdsubsurface")
-        material = CreateKdSubsurfaceMaterial(mtl2world, mp);
+        return boost::make_optional(CreateKdSubsurfaceMaterial(mtl2world, mp));
     else if (name == "measured")
-        material = CreateMeasuredMaterial(mtl2world, mp);
+        return boost::make_optional(CreateMeasuredMaterial(mtl2world, mp));
     else if (name == "shinymetal")
-        material = CreateShinyMetalMaterial(mtl2world, mp);
-    else
+        return boost::make_optional(CreateShinyMetalMaterial(mtl2world, mp));
+    else {
         Warning("Material \"%s\" unknown.", name.c_str());
-    mp.ReportUnused();
-    //if (!material) Error("Unable to create material \"%s\"", name.c_str());
-    return material;
+        mp.ReportUnused();
+        Error("Unable to create material \"%s\"", name.c_str());
+        return boost::optional<Material>();
+    }
 }
 
 
@@ -941,10 +942,12 @@ void pbrtMakeNamedMaterial(const string &name,
                      graphicsState.spectrumTextures);
     string matName = mp.FindString("type");
     WARN_IF_ANIMATED_TRANSFORM("MakeNamedMaterial");
-    if (matName == "") Error("No parameter string \"type\" found in MakeNamedMaterial");
-    else {
-        Material mtl = MakeMaterial(matName, curTransform[0], mp);
-        graphicsState.namedMaterials[name] = mtl;
+    if (matName == "") {
+      Error("No parameter string \"type\" found in MakeNamedMaterial");
+    } else {
+        auto mtl = MakeMaterial(matName, curTransform[0], mp);
+        if (mtl)
+          graphicsState.namedMaterials[name] = *mtl;
     }
 }
 
@@ -1056,7 +1059,8 @@ Material GraphicsState::CreateMaterial(const ParamSet &params) {
         namedMaterials.find(currentNamedMaterial) != namedMaterials.end()) {
         mtl = namedMaterials[graphicsState.currentNamedMaterial];
     } else {
-        mtl = MakeMaterial(material, curTransform[0], mp);
+        mtl = MakeMaterial(material, curTransform[0], mp).get_value_or(
+                CreateMatteMaterial(curTransform[0],mp));
     }
     return mtl;
 }
