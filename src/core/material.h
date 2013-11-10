@@ -42,9 +42,7 @@
 #include <functional>
 
 // Material Declarations
-class Material : public ReferenceCounted {
-public:
-    // Material Interface
+struct Material {
     Material(const Material& m) : getBSDF(m.getBSDF), getBSSRDF(m.getBSSRDF) {}
     Material& operator=(const Material& rhs) {
       if (this != &rhs) {
@@ -56,14 +54,14 @@ public:
     Material() {
       getBSSRDF = [](const DifferentialGeometry&,const DifferentialGeometry&,
                      MemoryArena&) -> BSSRDF* {
-        return NULL;
+        return nullptr;
       };
     }
     Material(std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&,
                           MemoryArena&)> const& f) : getBSDF(f) {
       getBSSRDF = [] (const DifferentialGeometry&,const DifferentialGeometry&,
                           MemoryArena&) -> BSSRDF* {
-        return NULL;
+        return nullptr;
       };
     }
     Material(std::function<BSDF*(const DifferentialGeometry&,const DifferentialGeometry&,
