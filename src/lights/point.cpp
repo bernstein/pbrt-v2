@@ -56,6 +56,13 @@ Spectrum PointLight::Sample_L(const Point &p, float pEpsilon,
     return Intensity / DistanceSquared(lightPos, p);
 }
 
+LightInfo PointLight::Sample_L(const Point &p, float pEpsilon,
+    const LightSample &ls, float time) const {
+    VisibilityTester visibility;
+    visibility.SetSegment(p, pEpsilon, lightPos, 0., time);
+    auto L = Intensity / DistanceSquared(lightPos, p);
+    return LightInfo{L,Normalize(lightPos - p),1.f,visibility};
+}
 
 Spectrum PointLight::Power(const Scene &) const {
     return 4.f * M_PI * Intensity;

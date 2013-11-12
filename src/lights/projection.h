@@ -51,6 +51,8 @@ public:
     ~ProjectionLight();
     Spectrum Sample_L(const Point &p, float pEpsilon, const LightSample &ls, float time,
         Vector *wi, float *pdf, VisibilityTester *vis) const;
+    virtual LightInfo Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time) const override;
     bool IsDeltaLight() const { return true; }
     Spectrum Projection(const Vector &w) const;
     Spectrum Power(const Scene &) const;

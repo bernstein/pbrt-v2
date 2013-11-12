@@ -41,46 +41,9 @@
 #include "geometry.h"
 #include "transform.h"
 #include "spectrum.h"
+#include "intersection.h"
 #include "rng.h"
 #include "memory.h"
-
-// Light Declarations
-class Light {
-public:
-    // Light Interface
-    virtual ~Light();
-    Light(const Transform &l2w, int ns = 1)
-        : nSamples(max(1, ns)), LightToWorld(l2w),
-          WorldToLight(Inverse(l2w)) {
-        // Warn if light has transformation with scale
-        if (WorldToLight.HasScale())
-            Warning("Scaling detected in world to light transformation!\n"
-                    "The system has numerous assumptions, implicit and explicit,\n"
-                    "that this transform will have no scale factors in it.\n"
-                    "Proceed at your own risk; your image may have errors or\n"
-                    "the system may crash as a result of this.");
-    }
-    virtual Spectrum Sample_L(const Point &p, float pEpsilon,
-        const LightSample &ls, float time, Vector *wi, float *pdf,
-        VisibilityTester *vis) const = 0;
-    virtual Spectrum Power(const Scene &) const = 0;
-    virtual bool IsDeltaLight() const = 0;
-    virtual Spectrum Le(const RayDifferential &r) const;
-    virtual float Pdf(const Point &p, const Vector &wi) const = 0;
-    virtual Spectrum Sample_L(const Scene &scene, const LightSample &ls,
-                              float u1, float u2, float time, Ray *ray,
-                              Normal *Ns, float *pdf) const = 0;
-    virtual void SHProject(const Point &p, float pEpsilon, int lmax,
-        const Scene &scene, bool computeLightVisibility, float time,
-        RNG &rng, Spectrum *coeffs) const;
-
-    // Light Public Data
-    const int nSamples;
-protected:
-    // Light Protected Data
-    const Transform LightToWorld, WorldToLight;
-};
-
 
 struct VisibilityTester {
     // VisibilityTester Public Methods
@@ -98,6 +61,58 @@ struct VisibilityTester {
     Spectrum Transmittance(const Scene &scene, const Renderer *renderer,
         const Sample *sample, RNG &rng, MemoryArena &arena) const;
     Ray r;
+};
+
+struct LightInfo
+{
+  LightInfo(Spectrum const& L, Vector const& w, float d, VisibilityTester const& v)
+    : Li(L), wi(w), pdf(d), visibility(v)
+  {}
+  Spectrum Li;
+  Vector wi;
+  float pdf;
+  VisibilityTester visibility;
+};
+
+// Light Declarations
+class Light {
+public:
+    // Light Interface
+    virtual ~Light() {}
+    Light(const Transform &l2w, int ns = 1)
+        : nSamples(max(1, ns)), LightToWorld(l2w),
+          WorldToLight(Inverse(l2w)) {
+        // Warn if light has transformation with scale
+        if (WorldToLight.HasScale())
+            Warning("Scaling detected in world to light transformation!\n"
+                    "The system has numerous assumptions, implicit and explicit,\n"
+                    "that this transform will have no scale factors in it.\n"
+                    "Proceed at your own risk; your image may have errors or\n"
+                    "the system may crash as a result of this.");
+    }
+    virtual Spectrum Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time, Vector *wi, float *pdf,
+        VisibilityTester *vis) const = 0;
+    virtual LightInfo Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time) const = 0;
+    virtual Spectrum Power(const Scene &) const = 0;
+    virtual bool IsDeltaLight() const = 0;
+    virtual Spectrum Le(const RayDifferential &r) const;
+    virtual float Pdf(const Point &p, const Vector &wi) const = 0;
+    virtual Spectrum Sample_L(const Scene &scene, const LightSample &ls,
+                              float u1, float u2, float time, Ray *ray,
+                              Normal *Ns, float *pdf) const = 0;
+    //virtual LightInfo2 Sample_L(const Scene &scene, const LightSample &ls,
+    //                          float u1, float u2, float time) const = 0;
+    virtual void SHProject(const Point &p, float pEpsilon, int lmax,
+        const Scene &scene, bool computeLightVisibility, float time,
+        RNG &rng, Spectrum *coeffs) const;
+
+    // Light Public Data
+    const int nSamples;
+protected:
+    // Light Protected Data
+    const Transform LightToWorld, WorldToLight;
 };
 
 

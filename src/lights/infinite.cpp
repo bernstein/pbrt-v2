@@ -221,6 +221,33 @@ Spectrum InfiniteAreaLight::Sample_L(const Point &p, float pEpsilon,
     return Ls;
 }
 
+LightInfo InfiniteAreaLight::Sample_L(const Point &p, float pEpsilon,
+    const LightSample &ls, float time) const {
+    PBRT_INFINITE_LIGHT_STARTED_SAMPLE();
+    // Find $(u,v)$ sample coordinates in infinite light texture
+    float uv[2], mapPdf;
+    distribution->SampleContinuous(ls.uPos[0], ls.uPos[1], uv, &mapPdf);
+    VisibilityTester visibility;
+    if (mapPdf == 0.f) return LightInfo(Spectrum(0.f),Vector(0.f,0.f,0.f),0.f,visibility);
+
+    // Convert infinite light sample point to direction
+    float theta = uv[1] * M_PI, phi = uv[0] * 2.f * M_PI;
+    float costheta = cosf(theta), sintheta = sinf(theta);
+    float sinphi = sinf(phi), cosphi = cosf(phi);
+    auto wi = LightToWorld(Vector(sintheta * cosphi, sintheta * sinphi,
+                              costheta));
+
+    // Compute PDF for sampled infinite light direction
+    auto pdf = mapPdf / (2.f * M_PI * M_PI * sintheta);
+    if (sintheta == 0.f) pdf = 0.f;
+
+    // Return radiance value for infinite light direction
+    visibility.SetRay(p, pEpsilon, wi, time);
+    Spectrum Ls = Spectrum(radianceMap->Lookup(uv[0], uv[1]),
+                           SPECTRUM_ILLUMINANT);
+    PBRT_INFINITE_LIGHT_FINISHED_SAMPLE();
+    return LightInfo{Ls,wi,pdf,visibility};
+}
 
 float InfiniteAreaLight::Pdf(const Point &, const Vector &w) const {
     PBRT_INFINITE_LIGHT_STARTED_PDF();

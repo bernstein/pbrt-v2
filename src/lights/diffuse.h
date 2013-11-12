@@ -55,9 +55,11 @@ public:
     bool IsDeltaLight() const { return false; }
     float Pdf(const Point &, const Vector &) const;
     Spectrum Sample_L(const Point &P, float pEpsilon, const LightSample &ls, float time,
-        Vector *wo, float *pdf, VisibilityTester *visibility) const;
+        Vector *wo, float *pdf, VisibilityTester *visibility) const override;
+    LightInfo Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time) const override;
     Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
-        float time, Ray *ray, Normal *Ns, float *pdf) const;
+        float time, Ray *ray, Normal *Ns, float *pdf) const override;
 protected:
     // DiffuseAreaLight Protected Data
     Spectrum Lemit;

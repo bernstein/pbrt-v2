@@ -39,10 +39,6 @@
 #include "sh.h"
 
 // Light Method Definitions
-Light::~Light() {
-}
-
-
 bool VisibilityTester::Unoccluded(const Scene &scene) const {
     return !scene.IntersectP(r);
 }

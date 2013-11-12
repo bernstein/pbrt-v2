@@ -56,6 +56,14 @@ Spectrum SpotLight::Sample_L(const Point &p, float pEpsilon,
     return Intensity * Falloff(-*wi) / DistanceSquared(lightPos, p);
 }
 
+LightInfo SpotLight::Sample_L(const Point &p, float pEpsilon,
+    const LightSample &ls, float time) const {
+    auto wi = Normalize(lightPos - p);
+    VisibilityTester visibility;
+    visibility.SetSegment(p, pEpsilon, lightPos, 0., time);
+    auto L = Intensity * Falloff(-wi) / DistanceSquared(lightPos, p);
+    return LightInfo{L,wi,1.f,visibility};
+}
 
 float SpotLight::Falloff(const Vector &w) const {
     Vector wl = Normalize(WorldToLight(w));

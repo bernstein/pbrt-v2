@@ -73,8 +73,8 @@ ProjectionLight::ProjectionLight(const Transform &light2world,
     cosTotalWidth = cosf(atanf(tanDiag));
 }
 
-
 ProjectionLight::~ProjectionLight() { delete projectionMap; }
+
 Spectrum ProjectionLight::Sample_L(const Point &p, float pEpsilon,
          const LightSample &ls, float time, Vector *wi,
          float *pdf, VisibilityTester *visibility) const {
@@ -83,6 +83,15 @@ Spectrum ProjectionLight::Sample_L(const Point &p, float pEpsilon,
     visibility->SetSegment(p, pEpsilon, lightPos, 0., time);
     return Intensity * Projection(-*wi) /
         DistanceSquared(lightPos, p);
+}
+
+LightInfo ProjectionLight::Sample_L(const Point &p, float pEpsilon,
+    const LightSample &ls, float time) const {
+    auto wi = Normalize(lightPos - p);
+    VisibilityTester visibility;
+    visibility.SetSegment(p, pEpsilon, lightPos, 0., time);
+    auto L = Intensity * Projection(-wi) / DistanceSquared(lightPos, p);
+    return LightInfo{L,wi,1.f,visibility};
 }
 
 

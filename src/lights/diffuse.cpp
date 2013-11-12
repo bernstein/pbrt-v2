@@ -74,6 +74,19 @@ Spectrum DiffuseAreaLight::Sample_L(const Point &p, float pEpsilon,
     return Ls;
 }
 
+LightInfo DiffuseAreaLight::Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time) const {
+    PBRT_AREA_LIGHT_STARTED_SAMPLE();
+    Normal ns;
+    Point ps = shapeSet->Sample(p, ls, &ns);
+    auto wi = Normalize(ps - p);
+    auto pdf = shapeSet->Pdf(p, wi);
+    VisibilityTester visibility;
+    visibility.SetSegment(p, pEpsilon, ps, 1e-3f, time);
+    Spectrum Ls = L(ps, ns, -wi);
+    PBRT_AREA_LIGHT_FINISHED_SAMPLE();
+    return LightInfo{Ls,wi,pdf,visibility};
+}
 
 float DiffuseAreaLight::Pdf(const Point &p, const Vector &wi) const {
     return shapeSet->Pdf(p, wi);

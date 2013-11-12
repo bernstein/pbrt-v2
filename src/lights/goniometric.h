@@ -51,6 +51,8 @@ public:
     string &texname);
     Spectrum Sample_L(const Point &p, float pEpsilon, const LightSample &ls,
         float time, Vector *wi, float *pdf, VisibilityTester *vis) const;
+    LightInfo Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time) const override;
     ~GonioPhotometricLight() { delete mipmap; }
     bool IsDeltaLight() const { return true; }
     Spectrum Scale(const Vector &w) const {

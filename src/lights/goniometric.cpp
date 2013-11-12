@@ -46,6 +46,15 @@ Spectrum GonioPhotometricLight::Sample_L(const Point &p, float pEpsilon,
     return Intensity * Scale(-*wi) / DistanceSquared(lightPos, p);
 }
 
+LightInfo GonioPhotometricLight::Sample_L(const Point &p, float pEpsilon,
+    const LightSample& ls, float time) const {
+    auto wi = Normalize(lightPos - p);
+    auto pdf = 1.f;
+    VisibilityTester visibility;
+    visibility.SetSegment(p, pEpsilon, lightPos, 0., time);
+    auto L = Intensity * Scale(-wi) / DistanceSquared(lightPos, p);
+    return LightInfo{L,wi,pdf,visibility};
+}
 
 GonioPhotometricLight::GonioPhotometricLight(const Transform &light2world,
         const Spectrum &intensity, const string &texname)

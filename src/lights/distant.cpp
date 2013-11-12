@@ -55,6 +55,12 @@ Spectrum DistantLight::Sample_L(const Point &p, float pEpsilon,
     return L;
 }
 
+LightInfo DistantLight::Sample_L(const Point &p, float pEpsilon,
+        const LightSample &ls, float time) const {
+    VisibilityTester visibility;
+    visibility.SetRay(p, pEpsilon, lightDir, time);
+    return LightInfo{L,lightDir,1.f,visibility};
+}
 
 Spectrum DistantLight::Power(const Scene &scene) const {
     Point worldCenter;
