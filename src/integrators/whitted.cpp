@@ -57,17 +57,14 @@ Spectrum WhittedIntegrator::Li(const Scene &scene,
 
     // Add contribution of each light source
     for (uint32_t i = 0; i < scene.lights.size(); ++i) {
-        Vector wi;
-        float pdf;
-        VisibilityTester visibility;
-        Spectrum Li = scene.lights[i]->Sample_L(p, isect.rayEpsilon,
-            LightSample(rng), ray.time, &wi, &pdf, &visibility);
-        if (Li.IsBlack() || pdf == 0.f) continue;
-        Spectrum f = bsdf->f(wo, wi);
-        if (!f.IsBlack() && visibility.Unoccluded(scene))
-            L += f * Li * AbsDot(wi, n) *
-                 visibility.Transmittance(scene, renderer,
-                                          sample, rng, arena) / pdf;
+        auto li = scene.lights[i]->Sample_L(p, isect.rayEpsilon,
+            LightSample(rng), ray.time);
+        if (li.Li.IsBlack() || li.pdf == 0.f) continue;
+        Spectrum f = bsdf->f(wo, li.wi);
+        if (!f.IsBlack() && li.visibility.Unoccluded(scene))
+            L += f * li.Li * AbsDot(li.wi, n) *
+                 li.visibility.Transmittance(scene, renderer,
+                                          sample, rng, arena) / li.pdf;
     }
     if (ray.depth + 1 < maxDepth) {
         // Trace rays for specular reflection and refraction
