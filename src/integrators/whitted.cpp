@@ -41,39 +41,35 @@ Spectrum WhittedIntegrator::Li(const Scene &scene,
         const Renderer *renderer, const RayDifferential &ray,
         const Intersection &isect, const Sample *sample, RNG &rng,
         MemoryArena &arena) const {
-    Spectrum L(0.);
-    // Compute emitted and reflected light at ray intersection point
+  // Evaluate BSDF at hit point
+  BSDF* bsdf = isect.GetBSDF(ray, arena);
 
-    // Evaluate BSDF at hit point
-    BSDF *bsdf = isect.GetBSDF(ray, arena);
+  // Initialize common variables for Whitted integrator
+  Point  const& p = bsdf->dgShading.p;
+  Normal const& n = bsdf->dgShading.nn;
+  Vector wo = -ray.d;
 
-    // Initialize common variables for Whitted integrator
-    const Point &p = bsdf->dgShading.p;
-    const Normal &n = bsdf->dgShading.nn;
-    Vector wo = -ray.d;
+  // Compute emitted light if ray hit an area light source
+  Spectrum L = isect.Le(wo);
 
-    // Compute emitted light if ray hit an area light source
-    L += isect.Le(wo);
-
-    // Add contribution of each light source
-    for (uint32_t i = 0; i < scene.lights.size(); ++i) {
-        auto li = scene.lights[i]->Sample_L(p, isect.rayEpsilon,
-            LightSample(rng), ray.time);
-        if (li.Li.IsBlack() || li.pdf == 0.f) continue;
-        Spectrum f = bsdf->f(wo, li.wi);
-        if (!f.IsBlack() && li.visibility.Unoccluded(scene))
-            L += f * li.Li * AbsDot(li.wi, n) *
-                 li.visibility.Transmittance(scene, renderer,
-                                          sample, rng, arena) / li.pdf;
-    }
-    if (ray.depth + 1 < maxDepth) {
-        // Trace rays for specular reflection and refraction
-        L += SpecularReflect(ray, bsdf, rng, isect, renderer, scene, sample,
-                             arena);
-        L += SpecularTransmit(ray, bsdf, rng, isect, renderer, scene, sample,
-                              arena);
-    }
-    return L;
+  // Add contribution of each light source
+  for (Light* l : scene.lights) {
+    auto li = l->Sample_L(p, isect.rayEpsilon, LightSample(rng), ray.time);
+    if (li.Li.IsBlack() || li.pdf == 0.f) continue;
+    Spectrum f = bsdf->f(wo, li.wi);
+    if (!f.IsBlack() && li.visibility.Unoccluded(scene))
+        L += f * li.Li * AbsDot(li.wi, n) *
+             li.visibility.Transmittance(scene, renderer,
+                                      sample, rng, arena) / li.pdf;
+  }
+  if (ray.depth + 1 < maxDepth) {
+    // Trace rays for specular reflection and refraction
+    L += SpecularReflect(ray, bsdf, rng, isect, renderer, scene, sample,
+                         arena);
+    L += SpecularTransmit(ray, bsdf, rng, isect, renderer, scene, sample,
+                          arena);
+  }
+  return L;
 }
 
 
