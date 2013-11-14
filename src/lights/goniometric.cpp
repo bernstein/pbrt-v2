@@ -38,14 +38,6 @@
 #include "imageio.h"
 
 // GonioPhotometricLight Method Definitions
-Spectrum GonioPhotometricLight::Sample_L(const Point &p, float pEpsilon,
-        const LightSample &ls, float time, Vector *wi, float *pdf, VisibilityTester *visibility) const {
-    *wi = Normalize(lightPos - p);
-    *pdf = 1.f;
-    visibility->SetSegment(p, pEpsilon, lightPos, 0., time);
-    return Intensity * Scale(-*wi) / DistanceSquared(lightPos, p);
-}
-
 LightInfo GonioPhotometricLight::Sample_L(const Point &p, float pEpsilon,
     const LightSample& ls, float time) const {
     auto wi = Normalize(lightPos - p);
@@ -86,18 +78,14 @@ GonioPhotometricLight *CreateGoniometricLight(const Transform &light2world,
     return new GonioPhotometricLight(light2world, I * sc, texname);
 }
 
-
-Spectrum GonioPhotometricLight::Sample_L(const Scene &scene, const LightSample &ls,
-        float u1, float u2, float time, Ray *ray, Normal *Ns, float *pdf) const {
-    *ray = Ray(lightPos, UniformSampleSphere(ls.uPos[0], ls.uPos[1]), 0.f, INFINITY, time);
-    *Ns = (Normal)ray->d;
-    *pdf = UniformSpherePdf();
-    return Intensity * Scale(ray->d);
-}
-
-
 float GonioPhotometricLight::Pdf(const Point &, const Vector &) const {
     return 0.;
 }
 
 
+LightInfo2 GonioPhotometricLight::Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
+        float time) const {
+    auto ray = Ray(lightPos, UniformSampleSphere(ls.uPos[0], ls.uPos[1]), 0.f, INFINITY, time);
+    auto Ns = (Normal)ray.d;
+    return LightInfo2(Intensity * Scale(ray.d), ray, Ns, UniformSpherePdf());
+}

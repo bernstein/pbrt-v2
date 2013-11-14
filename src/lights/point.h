@@ -46,14 +46,12 @@ class PointLight : public Light {
 public:
     // PointLight Public Methods
     PointLight(const Transform &light2world, const Spectrum &intensity);
-    Spectrum Sample_L(const Point &p, float pEpsilon, const LightSample &ls,
-        float time, Vector *wi, float *pdf, VisibilityTester *vis) const;
     LightInfo Sample_L(const Point &p, float pEpsilon,
         const LightSample &ls, float time) const override;
     Spectrum Power(const Scene &) const;
     bool IsDeltaLight() const { return true; }
-    Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1,
-                      float u2, float time, Ray *ray, Normal *Ns, float *pdf) const;
+    LightInfo2 Sample_L(const Scene &scene, const LightSample &ls,
+        float u1, float u2, float time) const override;
     float Pdf(const Point &, const Vector &) const;
     void SHProject(const Point &p, float pEpsilon, int lmax, const Scene &scene,
         bool computeLightVisibility, float time, RNG &rng, Spectrum *coeffs) const;

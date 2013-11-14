@@ -49,15 +49,13 @@ public:
     ProjectionLight(const Transform &light2world, const Spectrum &intensity,
         const string &texname, float fov);
     ~ProjectionLight();
-    Spectrum Sample_L(const Point &p, float pEpsilon, const LightSample &ls, float time,
-        Vector *wi, float *pdf, VisibilityTester *vis) const;
     virtual LightInfo Sample_L(const Point &p, float pEpsilon,
         const LightSample &ls, float time) const override;
     bool IsDeltaLight() const { return true; }
     Spectrum Projection(const Vector &w) const;
     Spectrum Power(const Scene &) const;
-    Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
-            float time, Ray *ray, Normal *Ns, float *pdf) const;
+    LightInfo2 Sample_L(const Scene &scene, const LightSample &ls,
+        float u1, float u2, float time) const override;
     float Pdf(const Point &, const Vector &) const;
 private:
     // ProjectionLight Private Data

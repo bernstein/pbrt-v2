@@ -78,8 +78,8 @@ private:
         const Point &p, LookupProc &process, float &maxDistSquared) const;
 
     // KdTree Private Data
-    KdNode *nodes;
-    NodeData *nodeData;
+    KdNode* nodes;
+    NodeData* nodeData;
     uint32_t nNodes, nextFreeNode;
 };
 

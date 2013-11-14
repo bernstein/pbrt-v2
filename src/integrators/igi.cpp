@@ -98,16 +98,16 @@ void IGIIntegrator::Preprocess(const Scene &scene, const Camera *camera,
             Light *light = scene.lights[ln];
 
             // Sample ray leaving light source for virtual light path
-            RayDifferential ray;
-            float pdf;
             LightSample ls(lightSampPos[2*sampOffset], lightSampPos[2*sampOffset+1],
                            lightSampComp[sampOffset]);
-            Normal Nl;
-            Spectrum alpha = light->Sample_L(scene, ls, lightSampDir[2*sampOffset],
+            LightInfo2 li = light->Sample_L(scene, ls, lightSampDir[2*sampOffset],
                                              lightSampDir[2*sampOffset+1],
-                                             camera->shutterOpen, &ray, &Nl, &pdf);
-            if (pdf == 0.f || alpha.IsBlack()) continue;
-            alpha /= pdf * lightPdf;
+                                             camera->shutterOpen);
+            RayDifferential ray(li.ray);
+            Spectrum alpha(li.L);
+
+            if (li.pdf == 0.f || alpha.IsBlack()) continue;
+            alpha /= li.pdf * lightPdf;
             Intersection isect;
             auto optIsect = scene.Intersect(ray);
             while (optIsect && !alpha.IsBlack()) {

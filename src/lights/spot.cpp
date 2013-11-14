@@ -46,16 +46,6 @@ SpotLight::SpotLight(const Transform &light2world,
     cosFalloffStart = cosf(Radians(fall));
 }
 
-
-Spectrum SpotLight::Sample_L(const Point &p, float pEpsilon,
-        const LightSample &ls, float time, Vector *wi,
-        float *pdf, VisibilityTester *visibility) const {
-    *wi = Normalize(lightPos - p);
-    *pdf = 1.f;
-    visibility->SetSegment(p, pEpsilon, lightPos, 0., time);
-    return Intensity * Falloff(-*wi) / DistanceSquared(lightPos, p);
-}
-
 LightInfo SpotLight::Sample_L(const Point &p, float pEpsilon,
     const LightSample &ls, float time) const {
     auto wi = Normalize(lightPos - p);
@@ -110,15 +100,10 @@ float SpotLight::Pdf(const Point &, const Vector &) const {
     return 0.;
 }
 
-
-Spectrum SpotLight::Sample_L(const Scene &scene, const LightSample &ls,
-        float u1, float u2, float time, Ray *ray, Normal *Ns,
-        float *pdf) const {
-    Vector v = UniformSampleCone(ls.uPos[0], ls.uPos[1], cosTotalWidth);
-    *ray = Ray(lightPos, LightToWorld(v), 0.f, INFINITY, time);
-    *Ns = (Normal)ray->d;
-    *pdf = UniformConePdf(cosTotalWidth);
-    return Intensity * Falloff(ray->d);
+LightInfo2 SpotLight::Sample_L(const Scene &scene, const LightSample &ls,
+    float u1, float u2, float time) const {
+  Vector v = UniformSampleCone(ls.uPos[0], ls.uPos[1], cosTotalWidth);
+  auto ray = Ray(lightPos, LightToWorld(v), 0.f, INFINITY, time);
+  auto Ns = (Normal)ray.d;
+  return LightInfo2(Intensity * Falloff(ray.d), ray, Ns, UniformConePdf(cosTotalWidth));
 }
-
-

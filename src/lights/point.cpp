@@ -46,16 +46,6 @@ PointLight::PointLight(const Transform &light2world,
     Intensity = intensity;
 }
 
-
-Spectrum PointLight::Sample_L(const Point &p, float pEpsilon,
-         const LightSample &ls, float time, Vector *wi, float *pdf,
-         VisibilityTester *visibility) const {
-    *wi = Normalize(lightPos - p);
-    *pdf = 1.f;
-    visibility->SetSegment(p, pEpsilon, lightPos, 0., time);
-    return Intensity / DistanceSquared(lightPos, p);
-}
-
 LightInfo PointLight::Sample_L(const Point &p, float pEpsilon,
     const LightSample &ls, float time) const {
     VisibilityTester visibility;
@@ -83,18 +73,6 @@ float PointLight::Pdf(const Point &, const Vector &) const {
     return 0.;
 }
 
-
-Spectrum PointLight::Sample_L(const Scene &scene, const LightSample &ls,
-        float u1, float u2, float time, Ray *ray, Normal *Ns,
-        float *pdf) const {
-    *ray = Ray(lightPos, UniformSampleSphere(ls.uPos[0], ls.uPos[1]),
-               0.f, INFINITY, time);
-    *Ns = (Normal)ray->d;
-    *pdf = UniformSpherePdf();
-    return Intensity;
-}
-
-
 void PointLight::SHProject(const Point &p, float pEpsilon, int lmax,
         const Scene &scene, bool computeLightVisibility, float time,
         RNG &rng, Spectrum *coeffs) const {
@@ -111,6 +89,14 @@ void PointLight::SHProject(const Point &p, float pEpsilon, int lmax,
     Spectrum Li = Intensity / DistanceSquared(lightPos, p);
     for (int i = 0; i < SHTerms(lmax); ++i)
         coeffs[i] = Li * Ylm[i];
+}
+
+LightInfo2 PointLight::Sample_L(const Scene &scene, const LightSample &ls,
+    float u1, float u2, float time) const {
+  auto ray = Ray(lightPos, UniformSampleSphere(ls.uPos[0], ls.uPos[1]),
+             0.f, INFINITY, time);
+  auto Ns = (Normal)ray.d;
+  return LightInfo2(Intensity, ray, Ns, UniformSpherePdf());
 }
 
 

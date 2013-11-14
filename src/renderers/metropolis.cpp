@@ -303,19 +303,18 @@ Spectrum MetropolisRenderer::PathL(const MLTSample &sample,
 
         // Choose light and sample ray to start light path
         PBRT_MLT_STARTED_SAMPLE_LIGHT_FOR_BIDIR();
-        float lightPdf, lightRayPdf;
+        float lightPdf;
         uint32_t lightNum = lightDistribution->SampleDiscrete(sample.lightNumSample,
                                                               &lightPdf);
         const Light *light = scene.lights[lightNum];
-        Ray lightRay;
-        Normal Nl;
         LightSample lrs(sample.lightRaySamples[0], sample.lightRaySamples[1],
                         sample.lightRaySamples[2]);
-        Spectrum lightWt = light->Sample_L(scene, lrs, sample.lightRaySamples[3],
-            sample.lightRaySamples[4], sample.cameraSample.time, &lightRay,
-            &Nl, &lightRayPdf);
+        LightInfo2 li  = light->Sample_L(scene, lrs, sample.lightRaySamples[3],
+            sample.lightRaySamples[4], sample.cameraSample.time);
+        Spectrum lightWt(li.L);
+
         PBRT_MLT_FINISHED_SAMPLE_LIGHT_FOR_BIDIR();
-        if (lightWt.IsBlack() || lightRayPdf == 0.f) {
+        if (lightWt.IsBlack() || li.pdf == 0.f) {
             // Compute radiance along path using path tracing
             return Lpath(scene, cameraPath, cameraLength, arena,
                          sample.lightingSamples, rng, sample.cameraSample.time,
@@ -323,8 +322,8 @@ Spectrum MetropolisRenderer::PathL(const MLTSample &sample,
         }
         else {
             // Compute radiance along paths using bidirectional path tracing
-            lightWt *= AbsDot(Normalize(Nl), lightRay.d) / (lightPdf * lightRayPdf);
-            uint32_t lightLength = GeneratePath(RayDifferential(lightRay), lightWt,
+            lightWt *= AbsDot(Normalize(li.N), li.ray.d) / (lightPdf * li.pdf);
+            uint32_t lightLength = GeneratePath(RayDifferential(li.ray), lightWt,
                 scene, arena, sample.lightPathSamples, lightPath, NULL, NULL);
             
             return Lbidir(scene, cameraPath, cameraLength, lightPath, lightLength,

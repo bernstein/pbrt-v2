@@ -75,16 +75,6 @@ ProjectionLight::ProjectionLight(const Transform &light2world,
 
 ProjectionLight::~ProjectionLight() { delete projectionMap; }
 
-Spectrum ProjectionLight::Sample_L(const Point &p, float pEpsilon,
-         const LightSample &ls, float time, Vector *wi,
-         float *pdf, VisibilityTester *visibility) const {
-    *wi = Normalize(lightPos - p);
-    *pdf = 1.f;
-    visibility->SetSegment(p, pEpsilon, lightPos, 0., time);
-    return Intensity * Projection(-*wi) /
-        DistanceSquared(lightPos, p);
-}
-
 LightInfo ProjectionLight::Sample_L(const Point &p, float pEpsilon,
     const LightSample &ls, float time) const {
     auto wi = Normalize(lightPos - p);
@@ -127,19 +117,16 @@ ProjectionLight *CreateProjectionLight(const Transform &light2world,
     return new ProjectionLight(light2world, I * sc, texname, fov);
 }
 
-
-Spectrum ProjectionLight::Sample_L(const Scene &scene, const LightSample &ls,
-        float u1, float u2, float time, Ray *ray, Normal *Ns, float *pdf) const {
-    Vector v = UniformSampleCone(ls.uPos[0], ls.uPos[1], cosTotalWidth);
-    *ray = Ray(lightPos, LightToWorld(v), 0.f, INFINITY, time);
-    *Ns = (Normal)ray->d;
-    *pdf = UniformConePdf(cosTotalWidth);
-    return Intensity * Projection(ray->d);
-}
-
-
 float ProjectionLight::Pdf(const Point &, const Vector &) const {
     return 0.;
 }
 
 
+LightInfo2 ProjectionLight::Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
+        float time) const {
+    Vector v = UniformSampleCone(ls.uPos[0], ls.uPos[1], cosTotalWidth);
+    auto ray = Ray(lightPos, LightToWorld(v), 0.f, INFINITY, time);
+    auto Ns = (Normal)ray.d;
+    auto pdf = UniformConePdf(cosTotalWidth);
+    return LightInfo2(Intensity * Projection(ray.d), ray, Ns, pdf);
+}

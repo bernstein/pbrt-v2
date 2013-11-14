@@ -239,15 +239,15 @@ void DipoleSubsurfaceIntegrator::Preprocess(const Scene &scene,
                 Sample02(s, scramble, lpos);
                 float lcomp = VanDerCorput(s, compScramble);
                 LightSample ls(lpos[0], lpos[1], lcomp);
-                Vector wi;
-                float lightPdf;
-                VisibilityTester visibility;
-                Spectrum Li = light->Sample_L(sp.p, sp.rayEpsilon,
-                    ls, camera->shutterOpen, &wi, &lightPdf, &visibility);
+                auto li = light->Sample_L(sp.p, sp.rayEpsilon,
+                    ls, camera->shutterOpen);
+                auto Li(li.L);
+                auto wi(li.wi);
+                auto lightPdf(li.pdf);
                 if (Dot(wi, sp.n) <= 0.) continue;
                 if (Li.IsBlack() || lightPdf == 0.f) continue;
-                Li *= visibility.Transmittance(scene, renderer, NULL, rng, arena);
-                if (visibility.Unoccluded(scene))
+                Li *= li.visibility.Transmittance(scene, renderer, NULL, rng, arena);
+                if (li.visibility.Unoccluded(scene))
                     Elight += Li * AbsDot(wi, sp.n) / lightPdf;
             }
             E += Elight / nSamples;

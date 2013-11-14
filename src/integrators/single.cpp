@@ -119,17 +119,15 @@ Spectrum SingleScatteringIntegrator::Li(const Scene &scene, const Renderer *rend
                          nLights-1);
             Light *light = scene.lights[ln];
             // Add contribution of _light_ due to scattering at _p_
-            float pdf;
-            VisibilityTester vis;
-            Vector wo;
             LightSample ls(lightComp[sampOffset], lightPos[2*sampOffset],
                            lightPos[2*sampOffset+1]);
-            Spectrum L = light->Sample_L(p, 0.f, ls, ray.time, &wo, &pdf, &vis);
+            LightInfo li = light->Sample_L(p, 0.f, ls, ray.time);
+            auto wo(li.wi);
             
-            if (!L.IsBlack() && pdf > 0.f && vis.Unoccluded(scene)) {
-                Spectrum Ld = L * vis.Transmittance(scene, renderer, NULL, rng, arena);
+            if (!li.L.IsBlack() && li.pdf > 0.f && li.visibility.Unoccluded(scene)) {
+                Spectrum Ld = li.L * li.visibility.Transmittance(scene, renderer, NULL, rng, arena);
                 Lv += Tr * ss * vr->p(p, w, -wo, ray.time) * Ld * float(nLights) /
-                        pdf;
+                        li.pdf;
             }
         }
         ++sampOffset;

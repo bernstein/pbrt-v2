@@ -49,8 +49,6 @@ public:
     // GonioPhotometricLight Public Methods
     GonioPhotometricLight(const Transform &light2world, const Spectrum &, const
     string &texname);
-    Spectrum Sample_L(const Point &p, float pEpsilon, const LightSample &ls,
-        float time, Vector *wi, float *pdf, VisibilityTester *vis) const;
     LightInfo Sample_L(const Point &p, float pEpsilon,
         const LightSample &ls, float time) const override;
     ~GonioPhotometricLight() { delete mipmap; }
@@ -65,8 +63,8 @@ public:
                Spectrum(mipmap->Lookup(s, t, SPECTRUM_ILLUMINANT));
     }
     Spectrum Power(const Scene &) const;
-    Spectrum Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
-        float time, Ray *ray, Normal *Ns, float *pdf) const;
+    LightInfo2 Sample_L(const Scene &scene, const LightSample &ls,
+        float u1, float u2, float time) const override;
     float Pdf(const Point &, const Vector &) const;
 private:
     // GonioPhotometricLight Private Data

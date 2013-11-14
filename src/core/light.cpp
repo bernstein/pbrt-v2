@@ -88,18 +88,16 @@ void Light::SHProject(const Point &p, float pEpsilon, int lmax,
     float *Ylm = ALLOCA(float, SHTerms(lmax));
     for (uint32_t i = 0; i < ns; ++i) {
         // Compute incident radiance sample from _light_, update SH _coeffs_
-        float u[2], pdf;
+        float u[2];
         Sample02(i, scramble2D, u);
         LightSample lightSample(u[0], u[1], VanDerCorput(i, scramble1D));
-        Vector wi;
-        VisibilityTester vis;
-        Spectrum Li = Sample_L(p, pEpsilon, lightSample, time, &wi, &pdf, &vis);
-        if (!Li.IsBlack() && pdf > 0.f &&
-            (!computeLightVisibility || vis.Unoccluded(scene))) {
+        auto li = Sample_L(p, pEpsilon, lightSample, time);
+        if (!li.L.IsBlack() && li.pdf > 0.f &&
+            (!computeLightVisibility || li.visibility.Unoccluded(scene))) {
             // Add light sample contribution to MC estimate of SH coefficients
-            SHEvaluate(wi, lmax, Ylm);
+            SHEvaluate(li.wi, lmax, Ylm);
             for (int j = 0; j < SHTerms(lmax); ++j)
-                coeffs[j] += Li * Ylm[j] / (pdf * ns);
+                coeffs[j] += li.L * Ylm[j] / (li.pdf * ns);
         }
     }
 }

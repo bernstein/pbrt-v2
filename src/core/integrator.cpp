@@ -122,22 +122,21 @@ Spectrum EstimateDirect(const Scene &scene, const Renderer *renderer,
         const BSDFSample &bsdfSample, BxDFType flags) {
     Spectrum Ld(0.);
     // Sample light source with multiple importance sampling
-    Vector wi;
-    float lightPdf, bsdfPdf;
-    VisibilityTester visibility;
-    Spectrum Li = light->Sample_L(p, rayEpsilon, lightSample, time,
-                                  &wi, &lightPdf, &visibility);
-    if (lightPdf > 0. && !Li.IsBlack()) {
+    float bsdfPdf;
+    LightInfo li = light->Sample_L(p, rayEpsilon, lightSample, time);
+    Vector wi(li.wi);
+    Spectrum Li(li.L);
+    if (li.pdf > 0. && !Li.IsBlack()) {
         Spectrum f = bsdf->f(wo, wi, flags);
-        if (!f.IsBlack() && visibility.Unoccluded(scene)) {
+        if (!f.IsBlack() && li.visibility.Unoccluded(scene)) {
             // Add light's contribution to reflected radiance
-            Li *= visibility.Transmittance(scene, renderer, NULL, rng, arena);
+            Li *= li.visibility.Transmittance(scene, renderer, NULL, rng, arena);
             if (light->IsDeltaLight())
-                Ld += f * Li * (AbsDot(wi, n) / lightPdf);
+                Ld += f * Li * (AbsDot(wi, n) / li.pdf);
             else {
                 bsdfPdf = bsdf->Pdf(wo, wi, flags);
-                float weight = PowerHeuristic(1, lightPdf, 1, bsdfPdf);
-                Ld += f * Li * (AbsDot(wi, n) * weight / lightPdf);
+                float weight = PowerHeuristic(1, li.pdf, 1, bsdfPdf);
+                Ld += f * Li * (AbsDot(wi, n) * weight / li.pdf);
             }
         }
     }
@@ -150,10 +149,10 @@ Spectrum EstimateDirect(const Scene &scene, const Renderer *renderer,
         if (!f.IsBlack() && bsdfPdf > 0.) {
             float weight = 1.f;
             if (!(sampledType & BSDF_SPECULAR)) {
-                lightPdf = light->Pdf(p, wi);
-                if (lightPdf == 0.)
+                li.pdf = light->Pdf(p, wi);
+                if (li.pdf == 0.)
                     return Ld;
-                weight = PowerHeuristic(1, bsdfPdf, 1, lightPdf);
+                weight = PowerHeuristic(1, bsdfPdf, 1, li.pdf);
             }
             // Add light contribution from BSDF sampling
             Spectrum Li(0.f);

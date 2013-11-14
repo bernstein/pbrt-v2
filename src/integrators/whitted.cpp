@@ -55,10 +55,10 @@ Spectrum WhittedIntegrator::Li(const Scene &scene,
   // Add contribution of each light source
   for (Light* l : scene.lights) {
     auto li = l->Sample_L(p, isect.rayEpsilon, LightSample(rng), ray.time);
-    if (li.Li.IsBlack() || li.pdf == 0.f) continue;
+    if (li.L.IsBlack() || li.pdf == 0.f) continue;
     Spectrum f = bsdf->f(wo, li.wi);
     if (!f.IsBlack() && li.visibility.Unoccluded(scene))
-        L += f * li.Li * AbsDot(li.wi, n) *
+        L += f * li.L * AbsDot(li.wi, n) *
              li.visibility.Transmittance(scene, renderer,
                                       sample, rng, arena) / li.pdf;
   }

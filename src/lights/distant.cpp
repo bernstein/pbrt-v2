@@ -45,16 +45,6 @@ DistantLight::DistantLight(const Transform &light2world,
     L = radiance;
 }
 
-
-Spectrum DistantLight::Sample_L(const Point &p, float pEpsilon,
-        const LightSample &ls, float time, Vector *wi, float *pdf,
-        VisibilityTester *visibility) const {
-    *wi = lightDir;
-    *pdf = 1.f;
-    visibility->SetRay(p, pEpsilon, *wi, time);
-    return L;
-}
-
 LightInfo DistantLight::Sample_L(const Point &p, float pEpsilon,
         const LightSample &ls, float time) const {
     VisibilityTester visibility;
@@ -85,10 +75,8 @@ float DistantLight::Pdf(const Point &, const Vector &) const {
     return 0.;
 }
 
-
-Spectrum DistantLight::Sample_L(const Scene &scene,
-        const LightSample &ls, float u1, float u2, float time,
-        Ray *ray, Normal *Ns, float *pdf) const {
+LightInfo2 DistantLight::Sample_L(const Scene &scene, const LightSample &ls, float u1, float u2,
+        float time) const {
     // Choose point on disk oriented toward infinite light direction
     Point worldCenter;
     float worldRadius;
@@ -100,12 +88,10 @@ Spectrum DistantLight::Sample_L(const Scene &scene,
     Point Pdisk = worldCenter + worldRadius * (d1 * v1 + d2 * v2);
 
     // Set ray origin and direction for infinite light ray
-    *ray = Ray(Pdisk + worldRadius * lightDir, -lightDir, 0.f, INFINITY,
+    auto ray = Ray(Pdisk + worldRadius * lightDir, -lightDir, 0.f, INFINITY,
                time);
-    *Ns = (Normal)ray->d;
+    auto Ns = (Normal)ray.d;
 
-    *pdf = 1.f / (M_PI * worldRadius * worldRadius);
-    return L;
+    auto pdf = 1.f / (M_PI * worldRadius * worldRadius);
+    return LightInfo2(L,ray,Ns,pdf);
 }
-
-
