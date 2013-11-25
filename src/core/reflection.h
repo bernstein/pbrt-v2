@@ -37,6 +37,7 @@
 #define PBRT_CORE_REFLECTION_H
 
 // core/reflection.h*
+#include <tuple>
 #include "pbrt.h"
 #include "geometry.h"
 #include "shape.h"
@@ -393,8 +394,8 @@ public:
     // MicrofacetDistribution Interface
     virtual ~MicrofacetDistribution() { }
     virtual float D(const Vector &wh) const = 0;
-    virtual void Sample_f(const Vector &wo, Vector *wi,
-                          float u1, float u2, float *pdf) const = 0;
+    virtual std::tuple<Vector,float> Sample_f(const Vector &wo,
+                          float u1, float u2) const = 0;
     virtual float Pdf(const Vector &wo, const Vector &wi) const = 0;
 };
 
@@ -433,7 +434,7 @@ public:
         float costhetah = AbsCosTheta(wh);
         return (exponent+2) * INV_TWOPI * powf(costhetah, exponent);
     }
-    virtual void Sample_f(const Vector &wi, Vector *sampled_f, float u1, float u2, float *pdf) const;
+    virtual std::tuple<Vector,float> Sample_f(const Vector &wi, float u1, float u2) const override;
     virtual float Pdf(const Vector &wi, const Vector &wo) const;
 private:
     float exponent;
@@ -455,7 +456,7 @@ public:
         float e = (ex * wh.x * wh.x + ey * wh.y * wh.y) / d;
         return sqrtf((ex+2.f) * (ey+2.f)) * INV_TWOPI * powf(costhetah, e);
     }
-    void Sample_f(const Vector &wo, Vector *wi, float u1, float u2, float *pdf) const;
+    std::tuple<Vector,float> Sample_f(const Vector &wo, float u1, float u2) const override;
     float Pdf(const Vector &wo, const Vector &wi) const;
     void sampleFirstQuadrant(float u1, float u2, float *phi, float *costheta) const;
 private:

@@ -331,7 +331,7 @@ float BRDFToBTDF::Pdf(const Vector &wo,
 
 Spectrum Microfacet::Sample_f(const Vector &wo, Vector *wi,
                               float u1, float u2, float *pdf) const {
-    distribution->Sample_f(wo, wi, u1, u2, pdf);
+    std::tie(*wi,*pdf) = distribution->Sample_f(wo, u1, u2);
     if (!SameHemisphere(wo, *wi)) return Spectrum(0.f);
     return f(wo, *wi);
 }
@@ -343,8 +343,7 @@ float Microfacet::Pdf(const Vector &wo, const Vector &wi) const {
 }
 
 
-void Blinn::Sample_f(const Vector &wo, Vector *wi, float u1, float u2,
-                     float *pdf) const {
+std::tuple<Vector,float> Blinn::Sample_f(const Vector &wo, float u1, float u2) const {
     // Compute sampled half-angle vector $\wh$ for Blinn distribution
     float costheta = powf(u1, 1.f / (exponent+1));
     float sintheta = sqrtf(max(0.f, 1.f - costheta*costheta));
@@ -353,13 +352,13 @@ void Blinn::Sample_f(const Vector &wo, Vector *wi, float u1, float u2,
     if (!SameHemisphere(wo, wh)) wh = -wh;
 
     // Compute incident direction by reflecting about $\wh$
-    *wi = -wo + 2.f * Dot(wo, wh) * wh;
+    const Vector wi = -wo + 2.f * Dot(wo, wh) * wh;
 
     // Compute PDF for $\wi$ from Blinn distribution
     float blinn_pdf = ((exponent + 1.f) * powf(costheta, exponent)) /
                       (2.f * M_PI * 4.f * Dot(wo, wh));
     if (Dot(wo, wh) <= 0.f) blinn_pdf = 0.f;
-    *pdf = blinn_pdf;
+    return std::make_tuple(wi, blinn_pdf);
 }
 
 
@@ -398,7 +397,7 @@ void Anisotropic::Sample_f(const Vector &wo, Vector *wi,
     if (!SameHemisphere(wo, wh)) wh = -wh;
 
     // Compute incident direction by reflecting about $\wh$
-    *wi = -wo + 2.f * Dot(wo, wh) * wh;
+    Vector wi = -wo + 2.f * Dot(wo, wh) * wh;
 
     // Compute PDF for $\wi$ from anisotropic distribution
     float costhetah = AbsCosTheta(wh);
@@ -410,7 +409,7 @@ void Anisotropic::Sample_f(const Vector &wo, Vector *wi,
                   powf(costhetah, e);
         anisotropic_pdf = d / (4.f * Dot(wo, wh));
     }
-    *pdf = anisotropic_pdf;
+    return std::make_tuple(wi,anisotropic_pdf);
 }
 
 
@@ -453,7 +452,7 @@ Spectrum FresnelBlend::Sample_f(const Vector &wo, Vector *wi,
     }
     else {
         u1 = 2.f * (u1 - .5f);
-        distribution->Sample_f(wo, wi, u1, u2, pdf);
+        std::tie(*wi,*pdf) = distribution->Sample_f(wo, u1, u2);
         if (!SameHemisphere(wo, *wi)) return Spectrum(0.f);
     }
     *pdf = Pdf(wo, *wi);
