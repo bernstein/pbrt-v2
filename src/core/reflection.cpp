@@ -373,8 +373,8 @@ float Blinn::Pdf(const Vector &wo, const Vector &wi) const {
 }
 
 
-void Anisotropic::Sample_f(const Vector &wo, Vector *wi,
-                           float u1, float u2, float *pdf) const {
+std::tuple<Vector,float> Anisotropic::Sample_f(const Vector &wo,
+                           float u1, float u2) const {
     // Sample from first quadrant and remap to hemisphere to sample $\wh$
     float phi, costheta;
     if (u1 < .25f) {
