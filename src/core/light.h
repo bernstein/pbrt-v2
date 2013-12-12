@@ -101,13 +101,13 @@ public:
                     "Proceed at your own risk; your image may have errors or\n"
                     "the system may crash as a result of this.");
     }
-    virtual LightInfo Sample_L(const Point &p, float pEpsilon,
-        const LightSample &ls, float time) const = 0;
+    virtual LightInfo Sample_L(const Point& p, float pEpsilon,
+        const LightSample& ls, float time) const = 0;
     virtual Spectrum Power(const Scene &) const = 0;
     virtual bool IsDeltaLight() const = 0;
     virtual Spectrum Le(const RayDifferential &r) const;
-    virtual float Pdf(const Point &p, const Vector &wi) const = 0;
-    virtual LightInfo2 Sample_L(const Scene &scene, const LightSample &ls,
+    virtual float Pdf(const Point& p, const Vector& wi) const = 0;
+    virtual LightInfo2 Sample_L(const Scene& scene, const LightSample& ls,
                               float u1, float u2, float time) const = 0;
     virtual void SHProject(const Point& p, float pEpsilon, int lmax,
         const Scene& scene, bool computeLightVisibility, float time,
