@@ -38,12 +38,6 @@
 #include "intersection.h"
 #include "montecarlo.h"
 
-// Integrator Method Definitions
-Integrator::~Integrator() {
-}
-
-
-
 // Integrator Utility Functions
 Spectrum UniformSampleAllLights(const Scene &scene,
         const Renderer *renderer, MemoryArena &arena, const Point &p,
@@ -258,7 +252,7 @@ Spectrum SpecularTransmit(const RayDifferential &ray, BSDF *bsdf,
 }
 
 
-Distribution1D *ComputeLightSamplingCDF(const Scene &scene) {
+Distribution1D* ComputeLightSamplingCDF(const Scene &scene) {
     uint32_t nLights = int(scene.lights.size());
     Assert(nLights > 0);
     vector<float>lightPower(nLights, 0.f);
